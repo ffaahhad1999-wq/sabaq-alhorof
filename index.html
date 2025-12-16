@@ -1,102 +1,77 @@
 <!DOCTYPE html>
 <html lang="ar" dir="rtl">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0" />
+  <meta charset="UTF-8">
   <title>سباق الحروف</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
   <style>
     body {
       margin: 0;
-      font-family: Tahoma, Arial, sans-serif;
-      background: #1e4fa1; /* أزرق قريب من اللوجو */
-      color: #fff;
+      background: #1f4fa3;
+      font-family: Arial, sans-serif;
       text-align: center;
-    }
-
-    header {
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      padding: 16px;
-      position: relative;
-    }
-
-    header img {
-      position: absolute;
-      left: 16px;
-      width: 48px;
-      height: auto;
+      color: white;
     }
 
     h1 {
-      color: #f6c400; /* أصفر اللوجو */
-      margin: 0;
-      font-size: 28px;
-    }
-
-    .container {
-      padding: 24px;
+      margin-top: 40px;
     }
 
     .btn {
-      width: 100%;
-      max-width: 320px;
-      padding: 16px;
-      margin: 12px auto;
+      display: block;
+      width: 80%;
+      max-width: 300px;
+      margin: 15px auto;
+      padding: 15px;
       font-size: 18px;
-      border: none;
       border-radius: 10px;
+      border: none;
       cursor: pointer;
     }
 
     .primary {
-      background: #f6c400;
-      color: #000;
+      background: #f4c400;
+      color: black;
     }
 
     .secondary {
-      background: #ffffff;
-      color: #000;
+      background: #ddd;
+      color: black;
     }
 
     .link {
       margin-top: 20px;
-      font-size: 16px;
-      color: #fff;
-      text-decoration: underline;
+      color: #cce;
       cursor: pointer;
     }
 
     footer {
-      position: fixed;
-      bottom: 12px;
-      width: 100%;
+      margin-top: 40px;
       font-size: 14px;
-      opacity: 0.9;
+      opacity: 0.8;
     }
   </style>
 </head>
 
 <body>
 
-  <header>
-    <!-- ضع صورة اللوجو لاحقاً باسم logo.png -->
-    <!-- <img src="logo.png" alt="logo"> -->
-    <h1>سباق الحروف</h1>
-  </header>
+  <h1>سباق الحروف</h1>
 
-  <div class="container">
-    <button class="btn primary" onclick="alert('تم الضغط على إنشاء لعبة')">إنشاء لعبة</button>
-    <button class="btn secondary" onclick="alert('تم الضغط على الدخول إلى اللعبة')">الدخول إلى اللعبة</button>
+  <button class="btn primary" onclick="location.href='create.html'">
+    إنشاء لعبة
+  </button>
 
-    <div class="link" onclick="window.location.href='https://sandooq-m.com'">
-      اشترِ اللعبة
-    </div>
+  <button class="btn secondary" onclick="location.href='join.html'">
+    الدخول إلى اللعبة
+  </button>
+
+  <div class="link" onclick="location.href='https://sandooq-m.com'">
+    اشترِ اللعبة
   </div>
 
   <footer>
-    © جميع الحقوق محفوظة لمتجر صندوق المسابقات 2024
+    © 2024 جميع الحقوق محفوظة لمتجر صندوق المسابقات
   </footer>
 
 </body>
