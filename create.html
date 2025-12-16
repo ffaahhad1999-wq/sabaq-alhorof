@@ -22,26 +22,20 @@ button{width:100%;padding:14px;font-size:18px;background:#f4c400;border:none;bor
 </div>
 
 <script type="module">
-import { ConvexHttpClient } from "https://cdn.jsdelivr.net/npm/convex/browser.js";
+import { ConvexHttpClient } from "https://esm.sh/convex/browser";
 
 const client = new ConvexHttpClient("https://avid-rooster-625.convex.cloud");
 
-window.createGame = async () => {
+async function createGame(){
   const name = document.getElementById("name").value;
   const players = Number(document.getElementById("players").value);
 
-  if (!name || !players) {
-    alert("اكتب اسم اللعبة وعدد اللاعبين");
-    return;
-  }
+  if(!name || !players) return alert("املأ جميع الحقول");
 
-  await client.mutation("games:create", {
-    name,
-    players
-  });
+  await client.mutation("games:create", { name, players });
 
   location.href = "game.html";
-};
+}
 </script>
 
 </body>
