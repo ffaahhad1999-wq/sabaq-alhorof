@@ -19,14 +19,15 @@
   <div class="box">
     <input id="name" placeholder="اسم اللعبة" />
     <input id="players" inputmode="numeric" placeholder="عدد اللاعبين" />
-    <button id="btn">إنشاء</button>
-    <div class="hint">ملاحظة: تقدر تكتب الأرقام عربي أو إنجليزي</div>
+    <button id="btn" type="button">إنشاء</button>
+    <div class="hint">ملاحظة: تقدر تكتب الأرقام ٠١٢٣ أو 123 (مو بالكلمات)</div>
   </div>
 
-  <script type="module">
-    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.5/firebase-app.js";
-    import { getFirestore, collection, addDoc, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.12.5/firebase-firestore.js";
+  <!-- Firebase compat (بدون module) -->
+  <script src="https://www.gstatic.com/firebasejs/10.12.5/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.12.5/firebase-firestore-compat.js"></script>
 
+  <script>
     const firebaseConfig = {
       apiKey: "AIzaSyDy2FEg8Xj0pA05syDawTh37rI1NEbQTjQ",
       authDomain: "sabaq-alhorof.firebaseapp.com",
@@ -36,8 +37,8 @@
       appId: "1:1053646928152:web:032d50148c3a4f1148066d"
     };
 
-    const app = initializeApp(firebaseConfig);
-    const db = getFirestore(app);
+    firebase.initializeApp(firebaseConfig);
+    const db = firebase.firestore();
 
     // يحوّل الأرقام العربية ٠١٢٣٤٥٦٧٨٩ إلى 0123456789
     function normalizeDigits(str) {
@@ -59,25 +60,16 @@
           return;
         }
 
-        const docRef = await addDoc(collection(db, "games"), {
+        const docRef = await db.collection("games").add({
           name,
           players,
-          createdAt: serverTimestamp()
+          createdAt: firebase.firestore.FieldValue.serverTimestamp()
         });
 
-        // ✅ التصحيح هنا: لازم backticks و "game.html" نص
         location.href = game.html?id=${encodeURIComponent(docRef.id)};
-
       } catch (e) {
         console.error(e);
-        alert("صار خطأ أثناء إنشاء اللعبة. افتح الموقع من الكمبيوتر وشوف Console لو تقدر.");
+        alert("صار خطأ أثناء إنشاء اللعبة. غالبًا من صلاحيات Firestore Rules.");
       } finally {
         btn.disabled = false;
       }
-    }
-
-    document.getElementById("btn").addEventListener("click", createGame);
-  </script>
-
-</body>
-</html>
