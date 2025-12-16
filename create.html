@@ -24,63 +24,42 @@
   </div>
 
   <script type="module">
-    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.5/firebase-app.js";
-    import { getFirestore, collection, addDoc, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.12.5/firebase-firestore.js";
+  import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.5/firebase-app.js";
+  import { getDatabase, ref, push } from "https://www.gstatic.com/firebasejs/10.12.5/firebase-database.js";
 
-    const firebaseConfig = {
-      apiKey: "AIzaSyDy2FEg8Xj0pA05syDawTh37rI1NEbQTjQ",
-      authDomain: "sabaq-alhorof.firebaseapp.com",
-      projectId: "sabaq-alhorof",
-      storageBucket: "sabaq-alhorof.firebasestorage.app",
-      messagingSenderId: "1053646928152",
-      appId: "1:1053646928152:web:032d50148c3a4f1148066d"
-    };
+  const firebaseConfig = {
+    apiKey: "AIzaSyDy2FEg8Xj0pA05syDawTh37rI1NEbQTjQ",
+    authDomain: "sabaq-alhorof.firebaseapp.com",
+    databaseURL: "PUT_YOUR_DATABASE_URL_HERE",
+    projectId: "sabaq-alhorof",
+    storageBucket: "sabaq-alhorof.firebasestorage.app",
+    messagingSenderId: "1053646928152",
+    appId: "1:1053646928152:web:032d50148c3a4f1148066d"
+  };
 
-    const app = initializeApp(firebaseConfig);
-    const db = getFirestore(app);
+  const app = initializeApp(firebaseConfig);
+  const db = getDatabase(app);
 
-    // يحوّل الأرقام العربية ٠١٢٣٤٥٦٧٨٩ إلى 0123456789
-    function normalizeDigits(str) {
-      const map = { "٠":"0","١":"1","٢":"2","٣":"3","٤":"4","٥":"5","٦":"6","٧":"7","٨":"8","٩":"9" };
-      return String(str ?? "").trim().replace(/[٠-٩]/g, d => map[d]);
+  document.getElementById("btn").addEventListener("click", () => {
+    const name = document.getElementById("name").value.trim();
+    const playersRaw = document.getElementById("players").value.trim();
+
+    const players = Number(playersRaw);
+
+    if (!name || !Number.isFinite(players) || players <= 0) {
+      alert("املأ جميع الحقول بشكل صحيح");
+      return;
     }
 
-    const btn = document.getElementById("btn");
+    const gameRef = push(ref(db, "games"), {
+      name,
+      players,
+      createdAt: Date.now()
+    });
 
-    async function createGame() {
-      const name = document.getElementById("name").value.trim();
-      const rawPlayers = document.getElementById("players").value;
-      const players = Number(normalizeDigits(rawPlayers));
-
-      if (!name || !Number.isFinite(players) || players <= 0) {
-        alert("املأ جميع الحقول بشكل صحيح");
-        return;
-      }
-
-      btn.disabled = true;
-      const oldText = btn.textContent;
-      btn.textContent = "جاري الإنشاء...";
-
-      try {
-        const docRef = await addDoc(collection(db, "games"), {
-          name,
-          players,
-          createdAt: serverTimestamp()
-        });
-
-        // ✅ هذا هو السطر الصحيح
-        location.href = game.html?id=${encodeURIComponent(docRef.id)};
-
-      } catch (e) {
-        console.error(e);
-        alert("صار خطأ أثناء الإنشاء. افتح Console وشوف الخطأ (غالبًا Rules أو إعدادات).");
-        btn.disabled = false;
-        btn.textContent = oldText;
-      }
-    }
-
-    btn.addEventListener("click", createGame);
-  </script>
+    location.href = "game.html?id=" + encodeURIComponent(gameRef.key);
+  });
+</script>
 
 </body>
 </html>
