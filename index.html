@@ -2,65 +2,16 @@
 <html lang="ar" dir="rtl">
 <head>
   <meta charset="UTF-8">
-  <title>إنشاء لعبة</title>
+  <title>سباق الحروف</title>
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <style>
     body{margin:0;background:#1f4fa3;color:#fff;font-family:Arial;text-align:center}
-    .box{background:#fff;color:#000;width:90%;max-width:420px;margin:40px auto;padding:20px;border-radius:12px}
-    input{width:100%;padding:12px;margin:10px 0;font-size:16px}
-    button{width:100%;padding:14px;font-size:18px;background:#f4c400;border:none;border-radius:10px;cursor:pointer}
-    .note{font-size:13px;margin-top:10px;color:#333}
+    h1{margin-top:60px}
+    .btn{margin-top:40px;padding:16px;width:80%;max-width:400px;background:#f4c400;border:none;border-radius:12px;font-size:20px;cursor:pointer}
   </style>
 </head>
 <body>
-
-<h2>إنشاء لعبة</h2>
-
-<div class="box">
-  <input id="name" placeholder="اسم اللعبة">
-  <input id="players" type="number" placeholder="عدد اللاعبين (أرقام إنجليزية فقط)">
-  <button onclick="createGame()">إنشاء</button>
-  <div class="note">مثال: 4 أو 6</div>
-</div>
-
-<script type="module">
-  import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.5/firebase-app.js";
-  import { getDatabase, ref, set } from "https://www.gstatic.com/firebasejs/10.12.5/firebase-database.js";
-
-  const firebaseConfig = {
-    apiKey: "AIzaSyDy2FEg8Xj0pA05syDawTh37rI1NEbQTjQ",
-    authDomain: "sabaq-alhorof.firebaseapp.com",
-    databaseURL: "https://sabaq-alhorof-default-rtdb.europe-west1.firebasedatabase.app",
-    projectId: "sabaq-alhorof",
-    storageBucket: "sabaq-alhorof.appspot.com",
-    messagingSenderId: "1053646928152",
-    appId: "1:1053646928152:web:032d50148c3a4f1148066d"
-  };
-
-  const app = initializeApp(firebaseConfig);
-  const db = getDatabase(app);
-
-  function createGame(){
-    const name = document.getElementById("name").value.trim();
-    const players = Number(document.getElementById("players").value);
-
-    if(!name || players <= 0){
-      alert("أدخل البيانات بشكل صحيح");
-      return;
-    }
-
-    const gameId = Date.now().toString();
-
-    set(ref(db, "games/" + gameId), {
-      name: name,
-      players: players
-    }).then(()=>{
-      location.href = "game.html?id=" + gameId;
-    }).catch(()=>{
-      alert("حدث خطأ");
-    });
-  }
-</script>
-
+  <h1>سباق الحروف</h1>
+  <button class="btn" onclick="location.href='create.html'">إنشاء لعبة</button>
 </body>
 </html>
