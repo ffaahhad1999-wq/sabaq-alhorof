@@ -46,23 +46,34 @@
     }
 
     async function createGame() {
-      const name = document.getElementById("name").value.trim();
-      const rawPlayers = document.getElementById("players").value;
-      const players = Number(normalizeDigits(rawPlayers));
+      const btn = document.getElementById("btn");
+      btn.disabled = true;
 
-      if (!name || !Number.isFinite(players) || players <= 0) {
-        alert("املأ جميع الحقول بشكل صحيح");
-        return;
+      try {
+        const name = document.getElementById("name").value.trim();
+        const rawPlayers = document.getElementById("players").value;
+        const players = Number(normalizeDigits(rawPlayers));
+
+        if (!name || !Number.isFinite(players) || players <= 0) {
+          alert("املأ جميع الحقول بشكل صحيح");
+          return;
+        }
+
+        const docRef = await addDoc(collection(db, "games"), {
+          name,
+          players,
+          createdAt: serverTimestamp()
+        });
+
+        // ✅ التصحيح هنا: لازم backticks و "game.html" نص
+        location.href = game.html?id=${encodeURIComponent(docRef.id)};
+
+      } catch (e) {
+        console.error(e);
+        alert("صار خطأ أثناء إنشاء اللعبة. افتح الموقع من الكمبيوتر وشوف Console لو تقدر.");
+      } finally {
+        btn.disabled = false;
       }
-
-      const docRef = await addDoc(collection(db, "games"), {
-        name,
-        players,
-        createdAt: serverTimestamp()
-      });
-
-      // نرسل gameId لصفحة اللعبة
-      location.href = game.html?id=${encodeURIComponent(docRef.id)};
     }
 
     document.getElementById("btn").addEventListener("click", createGame);
