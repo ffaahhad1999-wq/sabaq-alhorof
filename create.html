@@ -19,8 +19,8 @@
   <div class="box">
     <input id="name" placeholder="اسم اللعبة" />
     <input id="players" inputmode="numeric" placeholder="عدد اللاعبين" />
-    <button id="btn">إنشاء</button>
-    <div class="hint">تقدر تكتب الأرقام عربي أو إنجليزي</div>
+    <button id="btn" type="button">إنشاء</button>
+    <div class="hint">ملاحظة: تقدر تكتب الأرقام عربي أو إنجليزي</div>
   </div>
 
   <script type="module">
@@ -39,51 +39,47 @@
     const app = initializeApp(firebaseConfig);
     const db = getFirestore(app);
 
-    // يحوّل الأرقام العربية/الفارسية إلى أرقام إنجليزية
+    // يحوّل الأرقام العربية ٠١٢٣٤٥٦٧٨٩ إلى 0123456789
     function normalizeDigits(str) {
-      const map = {
-        "٠":"0","١":"1","٢":"2","٣":"3","٤":"4","٥":"5","٦":"6","٧":"7","٨":"8","٩":"9",
-        "۰":"0","۱":"1","۲":"2","۳":"3","۴":"4","۵":"5","۶":"6","۷":"7","۸":"8","۹":"9"
-      };
-      return String(str ?? "").trim().replace(/[٠-٩۰-۹]/g, d => map[d] ?? d);
+      const map = { "٠":"0","١":"1","٢":"2","٣":"3","٤":"4","٥":"5","٦":"6","٧":"7","٨":"8","٩":"9" };
+      return String(str ?? "").trim().replace(/[٠-٩]/g, d => map[d]);
     }
 
-    function setBusy(isBusy){
-      const btn = document.getElementById("btn");
-      btn.disabled = isBusy;
-      btn.textContent = isBusy ? "جاري الإنشاء..." : "إنشاء";
-    }
+    const btn = document.getElementById("btn");
 
     async function createGame() {
+      const name = document.getElementById("name").value.trim();
+      const rawPlayers = document.getElementById("players").value;
+      const players = Number(normalizeDigits(rawPlayers));
+
+      if (!name || !Number.isFinite(players) || players <= 0) {
+        alert("املأ جميع الحقول بشكل صحيح");
+        return;
+      }
+
+      btn.disabled = true;
+      const oldText = btn.textContent;
+      btn.textContent = "جاري الإنشاء...";
+
       try {
-        const name = document.getElementById("name").value.trim();
-        const rawPlayers = document.getElementById("players").value;
-        const players = Number(normalizeDigits(rawPlayers));
-
-        if (!name || !Number.isFinite(players) || players <= 0) {
-          alert("املأ اسم اللعبة وعدد اللاعبين بشكل صحيح");
-          return;
-        }
-
-        setBusy(true);
-
         const docRef = await addDoc(collection(db, "games"), {
           name,
           players,
           createdAt: serverTimestamp()
         });
 
-        // مهم جدًا: لازم Backticks
+        // ✅ هذا هو السطر الصحيح
         location.href = game.html?id=${encodeURIComponent(docRef.id)};
+
       } catch (e) {
         console.error(e);
-        alert("صار خطأ أثناء الإنشاء: " + (e?.message ?? e));
-      } finally {
-        setBusy(false);
+        alert("صار خطأ أثناء الإنشاء. افتح Console وشوف الخطأ (غالبًا Rules أو إعدادات).");
+        btn.disabled = false;
+        btn.textContent = oldText;
       }
     }
 
-    document.getElementById("btn").addEventListener("click", createGame);
+    btn.addEventListener("click", createGame);
   </script>
 
 </body>
