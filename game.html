@@ -2,21 +2,49 @@
 <html lang="ar" dir="rtl">
 <head>
 <meta charset="UTF-8">
-<title>اللعبة</title>
+<title>سباق الحروف</title>
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <style>
-body{margin:0;background:#1f4fa3;color:#fff;font-family:Arial;text-align:center}
-.map{margin:20px auto;width:90%;height:200px;background:#ccc;border-radius:12px;color:#000;display:flex;align-items:center;justify-content:center}
-.btn{width:80%;max-width:300px;padding:18px;margin:20px auto;font-size:20px;background:#e53935;color:#fff;border:none;border-radius:50px}
+body{
+  margin:0;
+  background:#1f4fa3;
+  color:#fff;
+  font-family:Arial;
+  text-align:center
+}
+.box{
+  background:#fff;
+  color:#000;
+  width:90%;
+  max-width:400px;
+  margin:40px auto;
+  padding:20px;
+  border-radius:12px
+}
 </style>
 </head>
 <body>
 
-<h3>سباق الحروف</h3>
+<h1>سباق الحروف</h1>
 
-<div class="map">الخريطة (عرض فقط)</div>
+<div class="box">
+  <h3 id="gameName">جاري التحميل...</h3>
+  <p id="playersCount"></p>
+</div>
 
-<button class="btn">زر اللاعب</button>
+<script type="module">
+import { ConvexHttpClient } from "https://esm.sh/convex/browser";
+
+const client = new ConvexHttpClient("https://avid-rooster-625.convex.cloud");
+
+const games = await client.query("games:getLatest");
+
+if (games) {
+  document.getElementById("gameName").innerText = games.name;
+  document.getElementById("playersCount").innerText =
+    "عدد اللاعبين: " + games.players;
+}
+</script>
 
 </body>
 </html>
