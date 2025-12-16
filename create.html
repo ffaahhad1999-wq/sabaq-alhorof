@@ -4,22 +4,74 @@
 <meta charset="UTF-8">
 <title>إنشاء لعبة</title>
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
 <style>
-body{margin:0;background:#1f4fa3;color:#fff;font-family:Arial;text-align:center}
-.box{background:#fff;color:#000;width:90%;max-width:400px;margin:40px auto;padding:20px;border-radius:12px}
-input{width:100%;padding:12px;margin:10px 0;font-size:16px}
-button{width:100%;padding:14px;font-size:18px;background:#f4c400;border:none;border-radius:10px;cursor:pointer}
+body{
+  margin:0;
+  background:#1f4fa3;
+  color:#fff;
+  font-family:Arial;
+  text-align:center
+}
+h2{
+  margin-top:40px;
+  color:#f4c400
+}
+.box{
+  background:#fff;
+  color:#000;
+  width:90%;
+  max-width:400px;
+  margin:30px auto;
+  padding:20px;
+  border-radius:12px
+}
+input{
+  width:100%;
+  padding:12px;
+  margin:10px 0;
+  font-size:16px;
+  box-sizing:border-box
+}
+button{
+  width:100%;
+  padding:14px;
+  font-size:18px;
+  background:#f4c400;
+  border:none;
+  border-radius:10px;
+  cursor:pointer
+}
 </style>
 </head>
+
 <body>
 
 <h2>إنشاء لعبة</h2>
 
 <div class="box">
-<input placeholder="اسم اللعبة">
-<input type="number" placeholder="عدد اللاعبين">
-<button onclick="location.href='game.html'">إنشاء</button>
+  <input id="gameName" placeholder="اسم اللعبة">
+  <input id="players" type="number" placeholder="عدد اللاعبين">
+  <button onclick="createGame()">إنشاء</button>
 </div>
+
+<script>
+function createGame(){
+  const name = document.getElementById("gameName").value;
+  const players = document.getElementById("players").value;
+
+  if(!name || !players){
+    alert("الرجاء تعبئة جميع الحقول");
+    return;
+  }
+
+  // مؤقتًا نخزنها محليًا (بنربط Convex بعدين)
+  localStorage.setItem("game_name", name);
+  localStorage.setItem("game_players", players);
+
+  location.href = "game.html";
+}
+</script>
 
 </body>
 </html>
