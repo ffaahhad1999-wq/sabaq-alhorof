@@ -1,70 +1,72 @@
 <!DOCTYPE html>
 <html lang="ar" dir="rtl">
 <head>
-<meta charset="UTF-8">
-<title>إنشاء لعبة</title>
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<style>
-body{
-  margin:0;
-  background:#1f4fa3;
-  color:#fff;
-  font-family:Arial;
-  text-align:center
-}
-.box{
-  background:#fff;
-  color:#000;
-  width:90%;
-  max-width:400px;
-  margin:40px auto;
-  padding:20px;
-  border-radius:12px
-}
-input{
-  width:100%;
-  padding:12px;
-  margin:10px 0;
-  font-size:16px
-}
-button{
-  width:100%;
-  padding:14px;
-  font-size:18px;
-  background:#f4c400;
-  border:none;
-  border-radius:10px;
-  cursor:pointer
-}
-</style>
+  <meta charset="UTF-8" />
+  <title>إنشاء لعبة</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <style>
+    body{margin:0;background:#1f4fa3;color:#fff;font-family:Arial;text-align:center}
+    .box{background:#fff;color:#000;width:90%;max-width:420px;margin:40px auto;padding:20px;border-radius:12px}
+    input{width:100%;padding:12px;margin:10px 0;font-size:16px;box-sizing:border-box}
+    button{width:100%;padding:14px;font-size:18px;background:#f4c400;border:none;border-radius:10px;cursor:pointer}
+    .hint{font-size:13px;opacity:.85;margin-top:10px}
+  </style>
 </head>
 <body>
 
-<h2>إنشاء لعبة</h2>
+  <h2>إنشاء لعبة</h2>
 
-<div class="box">
-  <input id="name" placeholder="اسم اللعبة">
-  <input id="players" type="number" placeholder="عدد اللاعبين">
-  <button onclick="createGame()">إنشاء</button>
-</div>
+  <div class="box">
+    <input id="name" placeholder="اسم اللعبة" />
+    <input id="players" inputmode="numeric" placeholder="عدد اللاعبين" />
+    <button id="btn">إنشاء</button>
+    <div class="hint">ملاحظة: تقدر تكتب الأرقام عربي أو إنجليزي</div>
+  </div>
 
-<script>
-function createGame() {
-  const name = document.getElementById("name").value;
-  const players = document.getElementById("players").value;
+  <script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.5/firebase-app.js";
+    import { getFirestore, collection, addDoc, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.12.5/firebase-firestore.js";
 
-  if (!name || !players) {
-    alert("املأ جميع الحقول");
-    return;
-  }
+    const firebaseConfig = {
+      apiKey: "AIzaSyDy2FEg8Xj0pA05syDawTh37rI1NEbQTjQ",
+      authDomain: "sabaq-alhorof.firebaseapp.com",
+      projectId: "sabaq-alhorof",
+      storageBucket: "sabaq-alhorof.firebasestorage.app",
+      messagingSenderId: "1053646928152",
+      appId: "1:1053646928152:web:032d50148c3a4f1148066d"
+    };
 
-  // تخزين مؤقت (بدون Firebase الآن)
-  localStorage.setItem("gameName", name);
-  localStorage.setItem("players", players);
+    const app = initializeApp(firebaseConfig);
+    const db = getFirestore(app);
 
-  location.href = "game.html";
-}
-</script>
+    // يحوّل الأرقام العربية ٠١٢٣٤٥٦٧٨٩ إلى 0123456789
+    function normalizeDigits(str) {
+      const map = { "٠":"0","١":"1","٢":"2","٣":"3","٤":"4","٥":"5","٦":"6","٧":"7","٨":"8","٩":"9" };
+      return String(str).trim().replace(/[٠-٩]/g, d => map[d]);
+    }
+
+    async function createGame() {
+      const name = document.getElementById("name").value.trim();
+      const rawPlayers = document.getElementById("players").value;
+      const players = Number(normalizeDigits(rawPlayers));
+
+      if (!name || !Number.isFinite(players) || players <= 0) {
+        alert("املأ جميع الحقول بشكل صحيح");
+        return;
+      }
+
+      const docRef = await addDoc(collection(db, "games"), {
+        name,
+        players,
+        createdAt: serverTimestamp()
+      });
+
+      // نرسل gameId لصفحة اللعبة
+      location.href = game.html?id=${encodeURIComponent(docRef.id)};
+    }
+
+    document.getElementById("btn").addEventListener("click", createGame);
+  </script>
 
 </body>
 </html>
