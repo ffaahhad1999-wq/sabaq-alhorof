@@ -39,18 +39,18 @@
     const db = getFirestore(app);
 
     const box = document.getElementById("box");
-    const params = new URLSearchParams(location.search);
-    const id = params.get("id");
 
-    async function run(){
-      try{
+    (async () => {
+      try {
+        const params = new URLSearchParams(location.search);
+        const id = params.get("id");
+
         if (!id) {
           box.innerHTML = "<div>ما وصلنا رقم اللعبة (id). ارجع وأنشئ لعبة من جديد.</div>";
           return;
         }
 
         const snap = await getDoc(doc(db, "games", id));
-
         if (!snap.exists()) {
           box.innerHTML = "<div>اللعبة غير موجودة (id غير صحيح).</div>";
           return;
@@ -58,17 +58,15 @@
 
         const data = snap.data();
         box.innerHTML = `
-          <div><b>اسم اللعبة:</b> ${data?.name ?? "-"}</div>
-          <div style="margin-top:8px"><b>عدد اللاعبين:</b> ${data?.players ?? "-"}</div>
-          <div class="muted" style="margin-top:14px">✅ تم الربط مع Firebase بنجاح.</div>
+          <div><b>اسم اللعبة:</b> ${data.name ?? "-"}</div>
+          <div style="margin-top:8px"><b>عدد اللاعبين:</b> ${data.players ?? "-"}</div>
+          <div class="muted" style="margin-top:14px">تم الربط مع قاعدة البيانات بنجاح ✅</div>
         `;
-      }catch(e){
+      } catch (e) {
         console.error(e);
-        box.innerHTML = <div>صار خطأ: ${(e?.message ?? e)}</div>;
+        box.innerHTML = "<div>صار خطأ أثناء التحميل. افتح Console وشوف الخطأ.</div>";
       }
-    }
-
-    run();
+    })();
   </script>
 
 </body>
