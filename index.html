@@ -1,0 +1,103 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0" />
+  <title>سباق الحروف</title>
+
+  <style>
+    body {
+      margin: 0;
+      font-family: Tahoma, Arial, sans-serif;
+      background: #1e4fa1; /* أزرق قريب من اللوجو */
+      color: #fff;
+      text-align: center;
+    }
+
+    header {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 16px;
+      position: relative;
+    }
+
+    header img {
+      position: absolute;
+      left: 16px;
+      width: 48px;
+      height: auto;
+    }
+
+    h1 {
+      color: #f6c400; /* أصفر اللوجو */
+      margin: 0;
+      font-size: 28px;
+    }
+
+    .container {
+      padding: 24px;
+    }
+
+    .btn {
+      width: 100%;
+      max-width: 320px;
+      padding: 16px;
+      margin: 12px auto;
+      font-size: 18px;
+      border: none;
+      border-radius: 10px;
+      cursor: pointer;
+    }
+
+    .primary {
+      background: #f6c400;
+      color: #000;
+    }
+
+    .secondary {
+      background: #ffffff;
+      color: #000;
+    }
+
+    .link {
+      margin-top: 20px;
+      font-size: 16px;
+      color: #fff;
+      text-decoration: underline;
+      cursor: pointer;
+    }
+
+    footer {
+      position: fixed;
+      bottom: 12px;
+      width: 100%;
+      font-size: 14px;
+      opacity: 0.9;
+    }
+  </style>
+</head>
+
+<body>
+
+  <header>
+    <!-- ضع صورة اللوجو لاحقاً باسم logo.png -->
+    <!-- <img src="logo.png" alt="logo"> -->
+    <h1>سباق الحروف</h1>
+  </header>
+
+  <div class="container">
+    <button class="btn primary">إنشاء لعبة</button>
+    <button class="btn secondary">الدخول إلى لعبة</button>
+
+    <div class="link" onclick="window.location.href='https://sandooq-m.com'">
+      اشترِ اللعبة
+    </div>
+  </div>
+
+  <footer>
+    © جميع الحقوق محفوظة لمتجر صندوق المسابقات 2024
+  </footer>
+
+</body>
+</html>
