@@ -35,28 +35,44 @@
       appId: "1:1053646928152:web:032d50148c3a4f1148066d"
     };
 
-    const app = initializeApp(firebaseConfig);
-    const db = getFirestore(app);
-
     const box = document.getElementById("box");
-    const params = new URLSearchParams(location.search);
-    const id = params.get("id");
 
-    if (!id) {
-      box.innerHTML = "<div>ما وصلنا رقم اللعبة (id). ارجع وأنشئ لعبة من جديد.</div>";
-    } else {
-      const snap = await getDoc(doc(db, "games", id));
-      if (!snap.exists()) {
-        box.innerHTML = "<div>اللعبة غير موجودة (id غير صحيح).</div>";
-      } else {
+    function show(msg) {
+      box.innerHTML = <div>${msg}</div>;
+    }
+
+    (async () => {
+      try {
+        const app = initializeApp(firebaseConfig);
+        const db = getFirestore(app);
+
+        const params = new URLSearchParams(location.search);
+        const id = params.get("id");
+
+        if (!id) {
+          show("ما وصلنا رقم اللعبة (id). ارجع وأنشئ لعبة من جديد.");
+          return;
+        }
+
+        const snap = await getDoc(doc(db, "games", id));
+
+        if (!snap.exists()) {
+          show("اللعبة غير موجودة (id غير صحيح أو لم يتم الحفظ).");
+          return;
+        }
+
         const data = snap.data();
+
         box.innerHTML = `
           <div><b>اسم اللعبة:</b> ${data.name ?? "-"}</div>
           <div style="margin-top:8px"><b>عدد اللاعبين:</b> ${data.players ?? "-"}</div>
-          <div class="muted" style="margin-top:14px">هذه صفحة اختبار العرض. بعدين نضيف الخريطة وزر اللاعب وربط المقدم.</div>
+          <div class="muted" style="margin-top:14px">تم تحميل بيانات اللعبة بنجاح.</div>
         `;
+      } catch (e) {
+        show("صار خطأ أثناء التحميل. السبب غالبًا صلاحيات Firestore أو المتصفح يمنع الطلبات.");
+        console.error(e);
       }
-    }
+    })();
   </script>
 
 </body>
