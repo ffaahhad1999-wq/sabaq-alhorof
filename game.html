@@ -6,8 +6,9 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <style>
     body{margin:0;background:#1f4fa3;color:#fff;font-family:Arial;text-align:center}
-    .card{background:#fff;color:#000;width:90%;max-width:420px;margin:40px auto;padding:20px;border-radius:12px}
-    .btn{margin-top:20px;padding:14px;width:90%;max-width:420px;background:#f4c400;border:none;border-radius:10px;font-size:18px}
+    .card{background:#fff;color:#000;width:90%;max-width:520px;margin:25px auto;padding:18px;border-radius:12px}
+    .btn{width:90%;max-width:520px;padding:14px;margin:10px auto;font-size:18px;border:none;border-radius:10px;cursor:pointer;background:#f4c400;color:#000}
+    .err{color:#b00020;white-space:pre-wrap}
   </style>
 </head>
 <body>
@@ -16,17 +17,52 @@
 
 <div id="box" class="card">جاري التحميل...</div>
 
-<button class="btn" onclick="location.href='index.html'">
-  الرجوع للرئيسية
-</button>
+<button class="btn" onclick="location.href='index.html'">الرجوع للرئيسية</button>
 
-<script type="module">
-  import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.5/firebase-app.js";
-  import { getDatabase, ref, get } from "https://www.gstatic.com/firebasejs/10.12.5/firebase-database.js";
+<script>
+  const DB_URL = "https://sabaq-alhorof-default-rtdb.europe-west1.firebasedatabase.app";
 
-  const firebaseConfig = {
-    apiKey: "AIzaSyDy2FEg8Xj0pA05syDawTh37rI1NEbQTjQ",
-    authDomain: "sabaq-alhorof.firebaseapp.com",
-    databaseURL: "https://sabaq-alhorof-default-rtdb.europe-west1.firebasedatabase.app",
-    projectId: "sabaq-alhorof",
-    storageBucket: "saba
+  function timeoutFetch(url, options={}, ms=10000){
+    return Promise.race([
+      fetch(url, options),
+      new Promise((_, rej)=>setTimeout(()=>rej(new Error("انتهت المهلة (Timeout)")), ms))
+    ]);
+  }
+
+  (async ()=>{
+    const box = document.getElementById("box");
+    const params = new URLSearchParams(location.search);
+    const id = params.get("id");
+
+    if(!id){
+      box.innerHTML = "<div class='err'>ما وصلنا رقم اللعبة (id). ارجع وأنشئ لعبة من جديد.</div>";
+      return;
+    }
+
+    try{
+      const res = await timeoutFetch(${DB_URL}/games/${encodeURIComponent(id)}.json, {}, 10000);
+
+      if(!res.ok){
+        const t = await res.text();
+        throw new Error(فشل الجلب: ${res.status}\n${t});
+      }
+
+      const data = await res.json();
+
+      if(!data){
+        box.innerHTML = "<div class='err'>اللعبة غير موجودة (id غير صحيح أو ما انحفظت).</div>";
+        return;
+      }
+
+      box.innerHTML = `
+        <div><b>اسم اللعبة:</b> ${data.name ?? "-"}</div>
+        <div style="margin-top:8px"><b>عدد اللاعبين:</b> ${data.players ?? "-"}</div>
+      `;
+    }catch(e){
+      box.innerHTML = "<div class='err'>صار خطأ أثناء التحميل:\n" + (e?.message || e) + "</div>";
+    }
+  })();
+</script>
+
+</body>
+</html>
