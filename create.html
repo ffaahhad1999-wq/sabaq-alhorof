@@ -4,12 +4,45 @@
   <meta charset="UTF-8" />
   <title>إنشاء لعبة</title>
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+
   <style>
-    body{margin:0;background:#1f4fa3;color:#fff;font-family:Arial;text-align:center}
-    .box{background:#fff;color:#000;width:90%;max-width:420px;margin:40px auto;padding:20px;border-radius:12px}
-    input{width:100%;padding:12px;margin:10px 0;font-size:16px;box-sizing:border-box}
-    button{width:100%;padding:14px;font-size:18px;background:#f4c400;border:none;border-radius:10px;cursor:pointer}
-    .hint{font-size:13px;opacity:.85;margin-top:10px}
+    body {
+      margin: 0;
+      background: #1f4fa3;
+      color: #fff;
+      font-family: Arial;
+      text-align: center;
+    }
+    .box {
+      background: #fff;
+      color: #000;
+      width: 90%;
+      max-width: 420px;
+      margin: 40px auto;
+      padding: 20px;
+      border-radius: 12px;
+    }
+    input {
+      width: 100%;
+      padding: 12px;
+      margin: 10px 0;
+      font-size: 16px;
+      box-sizing: border-box;
+    }
+    button {
+      width: 100%;
+      padding: 14px;
+      font-size: 18px;
+      background: #f4c400;
+      border: none;
+      border-radius: 10px;
+      cursor: pointer;
+    }
+    .hint {
+      font-size: 13px;
+      opacity: .85;
+      margin-top: 10px;
+    }
   </style>
 </head>
 <body>
@@ -18,48 +51,45 @@
 
   <div class="box">
     <input id="name" placeholder="اسم اللعبة" />
-    <input id="players" inputmode="numeric" placeholder="عدد اللاعبين" />
-    <button id="btn" type="button">إنشاء</button>
-    <div class="hint">ملاحظة: تقدر تكتب الأرقام عربي أو إنجليزي</div>
+    <input id="players" type="number" placeholder="عدد اللاعبين" />
+    <button id="btn">إنشاء</button>
+    <div class="hint">اكتب عدد اللاعبين بالأرقام الإنجليزية فقط</div>
   </div>
 
   <script type="module">
-  import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.5/firebase-app.js";
-  import { getDatabase, ref, push } from "https://www.gstatic.com/firebasejs/10.12.5/firebase-database.js";
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.5/firebase-app.js";
+    import { getDatabase, ref, push } from "https://www.gstatic.com/firebasejs/10.12.5/firebase-database.js";
 
-  const firebaseConfig = {
-    apiKey: "AIzaSyDy2FEg8Xj0pA05syDawTh37rI1NEbQTjQ",
-    authDomain: "sabaq-alhorof.firebaseapp.com",
-    databaseURL: "PUT_YOUR_DATABASE_URL_HERE",
-    projectId: "sabaq-alhorof",
-    storageBucket: "sabaq-alhorof.firebasestorage.app",
-    messagingSenderId: "1053646928152",
-    appId: "1:1053646928152:web:032d50148c3a4f1148066d"
-  };
+    const firebaseConfig = {
+      apiKey: "AIzaSyDy2FEg8Xj0pA05syDawTh37rI1NEbQTjQ",
+      authDomain: "sabaq-alhorof.firebaseapp.com",
+      databaseURL: "https://sabaq-alhorof-default-rtdb.europe-west1.firebasedatabase.app",
+      projectId: "sabaq-alhorof",
+      storageBucket: "sabaq-alhorof.firebasestorage.app",
+      messagingSenderId: "1053646928152",
+      appId: "1:1053646928152:web:032d50148c3a4f1148066d"
+    };
 
-  const app = initializeApp(firebaseConfig);
-  const db = getDatabase(app);
+    const app = initializeApp(firebaseConfig);
+    const db = getDatabase(app);
 
-  document.getElementById("btn").addEventListener("click", () => {
-    const name = document.getElementById("name").value.trim();
-    const playersRaw = document.getElementById("players").value.trim();
+    document.getElementById("btn").addEventListener("click", () => {
+      const name = document.getElementById("name").value.trim();
+      const players = Number(document.getElementById("players").value);
 
-    const players = Number(playersRaw);
+      if (!name || !players || players <= 0) {
+        alert("املأ جميع الحقول");
+        return;
+      }
 
-    if (!name || !Number.isFinite(players) || players <= 0) {
-      alert("املأ جميع الحقول بشكل صحيح");
-      return;
-    }
+      const gameRef = push(ref(db, "games"), {
+        name: name,
+        players: players,
+        createdAt: Date.now()
+      });
 
-    const gameRef = push(ref(db, "games"), {
-      name,
-      players,
-      createdAt: Date.now()
+      location.href = "game.html?id=" + gameRef.key;
     });
-
-    location.href = "game.html?id=" + encodeURIComponent(gameRef.key);
-  });
-</script>
+  </script>
 
 </body>
-</html>
