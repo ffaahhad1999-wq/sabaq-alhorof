@@ -1,3 +1,40 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>إنشاء لعبة</title>
+<style>
+  body{margin:0;background:#1f4fa3;color:#fff;font-family:Arial;text-align:center}
+  h2{margin-top:30px}
+  .box{background:#fff;color:#000;width:90%;max-width:400px;margin:20px auto;padding:20px;border-radius:12px}
+  input{width:100%;padding:12px;margin:10px 0;font-size:16px;box-sizing:border-box}
+  button{width:100%;padding:14px;font-size:18px;background:#f4c400;border:none;border-radius:10px;cursor:pointer}
+  #debug{margin:12px auto;max-width:420px;background:rgba(0,0,0,.25);padding:10px;border-radius:10px;font-size:14px;white-space:pre-wrap;text-align:right}
+</style>
+</head>
+<body>
+
+<h2>إنشاء لعبة</h2>
+
+<div id="debug">جارِ التحميل...</div>
+
+<div class="box">
+  <input id="name" placeholder="اسم اللعبة" />
+  <input id="players" type="number" placeholder="عدد اللاعبين" />
+  <button onclick="createGame()">إنشاء</button>
+</div>
+
+<script>
+  // يعرض أي خطأ يصير بدل صفحة بيضاء
+  window.addEventListener("error", (e) => {
+    const msg = "خطأ: " + (e?.message || e?.error || "غير معروف");
+    const el = document.getElementById("debug");
+    if (el) el.textContent = msg;
+    alert(msg);
+  });
+</script>
+
 <script type="module">
   import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
   import { getFirestore, collection, addDoc } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
@@ -14,21 +51,33 @@
   const app = initializeApp(firebaseConfig);
   const db = getFirestore(app);
 
+  const debug = document.getElementById("debug");
+  debug.textContent = "تم تحميل الصفحة بنجاح. جاهز للاختبار.";
+
   window.createGame = async function () {
-    const name = document.getElementById("name").value;
-    const players = Number(document.getElementById("players").value);
+    try {
+      const name = document.getElementById("name").value.trim();
+      const players = Number(document.getElementById("players").value);
 
-    if (!name || !players) {
-      alert("املأ جميع الحقول");
-      return;
+      if (!name || !players) {
+        alert("املأ جميع الحقول");
+        return;
+      }
+
+      await addDoc(collection(db, "games"), {
+        name,
+        players,
+        createdAt: Date.now()
+      });
+
+      alert("تم إنشاء اللعبة");
+    } catch (err) {
+      const msg = "فشل الحفظ: " + (err?.message || String(err));
+      debug.textContent = msg;
+      alert(msg);
     }
-
-    await addDoc(collection(db, "games"), {
-      name: name,
-      players: players,
-      createdAt: Date.now()
-    });
-
-    alert("تم إنشاء اللعبة بنجاح ✅");
-  }
+  };
 </script>
+
+</body>
+</html>
