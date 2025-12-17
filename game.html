@@ -24,6 +24,9 @@
 
       /* حد خفيف جداً يعطي تطابق بصري أفضل */
       --hexBorder: rgba(0,0,0,.10);
+
+      /* ✅ لون دافئ للمربع الكبير */
+      --warmBox: #fff3dd;
     }
 
     body{
@@ -32,11 +35,13 @@
       font-family:Arial, sans-serif;
       color:#fff;
       text-align:center;
-      padding-bottom:110px; /* ✅ مساحة لزر الرجوع بأسفل الشاشة */
+      padding-bottom:110px;
       box-sizing:border-box;
     }
+
     header{position:relative;padding:14px 14px 0}
-    .logo{position:absolute;left:14px;top:14px;width:44px;height:44px;object-fit:contain}
+    /* ✅ اللوجو موجود الآن */
+    .logo{position:absolute;left:14px;top:14px;width:54px;height:54px;object-fit:contain}
     .gameName{position:absolute;right:14px;top:20px;font-size:14px;opacity:.95}
     h1{margin:18px 0 10px;color:var(--yellow);font-size:28px}
     .wrap{width:95%;max-width:900px;margin:0 auto}
@@ -103,13 +108,11 @@
       stroke-width: 1;
     }
 
-    /* ✅ الحالات */
     .overlaySvg .state0{ fill: rgba(0,0,0,0.001); }
     .overlaySvg .state1{ fill: var(--hexPale); }
     .overlaySvg .state2{ fill: var(--hexGreen); }
     .overlaySvg .state3{ fill: var(--hexOrange); }
 
-    /* ✅ حركة تكرارية فقط للأصفر الباهت */
     @keyframes palePulse {
       0%   { opacity: 1; }
       50%  { opacity: .35; }
@@ -119,7 +122,32 @@
       animation: palePulse 0.9s ease-in-out infinite;
     }
 
-    .below{display:flex;gap:10px;flex-wrap:wrap;justify-content:center;align-items:stretch}
+    /* ✅ شريط أزرار (الأصفر في الصورة) */
+    .controlBar{
+      margin-top:10px;
+      display:flex;
+      gap:10px;
+      flex-wrap:wrap;
+      align-items:center;
+      justify-content:space-between;
+      background:rgba(255,255,255,.35);
+      border-radius:12px;
+      padding:10px;
+    }
+    .controlBar .leftGroup{display:flex;gap:10px;align-items:center;flex-wrap:wrap}
+    .controlBar .rightGroup{display:flex;gap:10px;align-items:center;flex-wrap:wrap}
+    .zoomWrap input[type="range"]{width:180px;max-width:55vw}
+
+    /* ✅ شريط (الأحمر في الصورة) لاسم الضاغط + تغيير السؤال */
+    .actionBar{
+      margin-top:10px;
+      display:flex;
+      gap:10px;
+      flex-wrap:wrap;
+      align-items:stretch;
+      justify-content:space-between;
+    }
+
     .buzzBox{
       min-width:260px;flex:1;
       border-radius:12px;padding:12px;color:#fff;
@@ -127,29 +155,28 @@
     }
     .buzzEmpty{background:rgba(0,0,0,.25)}
 
-    /* ✅ تكبير مربع السؤال */
+    /* ✅ المربع الكبير (دفء + أكبر) */
     .questionBox{
-      min-width:260px;flex:2;
-      border-radius:12px;padding:12px;background:#fff;color:#111;text-align:right;
-      display:flex;flex-direction:column;
+      margin-top:10px;
+      border-radius:12px;
+      padding:14px;
+      background:var(--warmBox);
+      color:#111;
+      text-align:right;
       box-sizing:border-box;
     }
     .qTitle{font-weight:bold;margin-bottom:8px}
     .qText{
       line-height:1.8;
-      flex:1;
-      min-height:320px;          /* ✅ أكبر على الكمبيوتر */
+      min-height:320px;
       overflow:auto;
       white-space:pre-wrap;
     }
     @media (max-width: 700px){
-      .qText{ min-height:45vh; } /* ✅ أكبر على الجوال مثل الصورة */
+      .qText{ min-height:48vh; }
     }
 
     .smallNote{font-size:12px;opacity:.85;margin-top:8px}
-
-    .buzzRow{display:flex;gap:10px;flex-wrap:wrap;align-items:stretch;justify-content:center}
-    .nextQBtn{min-width:160px}
 
     .playerBtnWrap{margin-top:14px}
     .playerBigBtn{
@@ -161,7 +188,6 @@
     }
     .disabled{opacity:.5;cursor:not-allowed}
 
-    /* ✅ نقل زر الرجوع للمكان المحدد بأسفل الشاشة */
     .footerBtn{
       position:fixed;
       left:50%;
@@ -182,7 +208,8 @@
 </head>
 <body>
   <header>
-    <img class="logo" src="" alt="">
+    <!-- ✅ ضع ملف اللوجو باسم logo.png بجانب هذا الملف -->
+    <img class="logo" src="logo.png" alt="شعار">
     <div id="gameName" class="gameName"></div>
     <h1>سباق الحروف</h1>
   </header>
@@ -419,11 +446,6 @@
       main.innerHTML = `
         <div class="row" style="justify-content:space-between">
           <div style="font-size:14px;opacity:.9">رمز: <b>${escapeHtml(room.code)}</b></div>
-          <div class="row">
-            ${isHost ? `<button id="mapBtn" class="btn btnYellow">تغيير الخريطة</button>` : ""}
-            <input id="zoom" type="range" min="0.8" max="1.35" step="0.01" value="1" />
-            ${isHost ? `<button id="freezeBtn" class="btn ${room.freeze ? "btnRed" : "btnGreen"}">${room.freeze ? "مجمّد" : "مفعل"}</button>` : ""}
-          </div>
         </div>
 
         <div class="mapOuter">
@@ -435,25 +457,30 @@
           </div>
         </div>
 
-        <div style="height:10px"></div>
-
-        <div class="below">
-          <div class="buzzRow" style="flex:1;min-width:260px">
-            <div id="buzzBox" class="buzzBox buzzEmpty">—</div>
-            ${isHost ? `<button id="nextQ" class="btn btnYellow nextQBtn">تغيير السؤال</button>` : ""}
+        <!-- ✅ (الأصفر) مكان أزرار الخريطة/الزوم/التجميد -->
+        <div class="controlBar">
+          <div class="leftGroup">
+            ${isHost ? `<button id="freezeBtn" class="btn ${room.freeze ? "btnRed" : "btnGreen"}">${room.freeze ? "مجمّد" : "مفعل"}</button>` : ""}
           </div>
 
-          ${isHost ? `
-            <div class="questionBox">
-              <div class="qTitle">السؤال</div>
-              <div id="qText" class="qText">اختر حرفًا من الخريطة</div>
+          <div class="rightGroup">
+            ${isHost ? `<button id="mapBtn" class="btn btnYellow">تغيير الخريطة</button>` : ""}
+            <div class="zoomWrap">
+              <input id="zoom" type="range" min="0.8" max="1.35" step="0.01" value="1" />
             </div>
-          ` : `
-            <div class="questionBox">
-              <div class="qTitle">الحالة</div>
-              <div class="qText">${started ? "جاهز" : "بانتظار المقدم"}</div>
-            </div>
-          `}
+          </div>
+        </div>
+
+        <!-- ✅ (الأحمر) اسم الضاغط + تغيير السؤال -->
+        <div class="actionBar">
+          <div id="buzzBox" class="buzzBox buzzEmpty">—</div>
+          ${isHost ? `<button id="nextQ" class="btn btnYellow" style="min-width:160px">تغيير السؤال</button>` : ""}
+        </div>
+
+        <!-- ✅ المربع الكبير الدافئ -->
+        <div class="questionBox">
+          <div class="qTitle">السؤال</div>
+          <div id="qText" class="qText">اختر حرفًا من الخريطة</div>
         </div>
 
         ${(!isHost) ? `
@@ -561,16 +588,15 @@
         buzzBox.textContent = "—";
       }
 
-      if(isHost){
-        const qText = document.getElementById("qText");
-        const cur = room.current || {};
-        if(cur.letter){
-          const list = QUESTIONS[cur.letter] || [];
-          const idx = Number(cur.qIndex || 0) % Math.max(list.length,1);
-          qText.textContent = list.length ? list[idx] : `لا يوجد سؤال لحرف ${cur.letter}`;
-        }else{
-          qText.textContent = "اختر حرفًا من الخريطة";
-        }
+      // ✅ عرض السؤال داخل المربع الكبير
+      const qText = document.getElementById("qText");
+      const cur = room.current || {};
+      if(cur.letter){
+        const list = QUESTIONS[cur.letter] || [];
+        const idx = Number(cur.qIndex || 0) % Math.max(list.length,1);
+        qText.textContent = list.length ? list[idx] : `لا يوجد سؤال لحرف ${cur.letter}`;
+      }else{
+        qText.textContent = "اختر حرفًا من الخريطة";
       }
 
       zoom.addEventListener("input", () => {
