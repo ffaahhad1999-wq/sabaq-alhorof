@@ -49,7 +49,7 @@
       padding:8px;border-radius:10px;margin:6px 0;cursor:pointer
     }
 
-    /* MAP */
+    /* MAP (حل جذري: SVG Polygons للنقر + مطابق Pointy-Top) */
     .mapOuter{width:100%;display:flex;justify-content:center}
     .mapScale{
       width:min(92vw, 760px);
@@ -59,22 +59,32 @@
     .mapBox{
       position:relative;
       width:100%;
-      aspect-ratio: 1536 / 862;
       border-radius:12px;
       overflow:hidden;
-      background:#0000;
+      background:transparent;
     }
-    .mapBox img{width:100%;height:100%;object-fit:cover;display:block}
-
-    /* SVG overlay (حل جذري: شكل + ضغط مطابق 100%) */
+    .mapBox img{
+      width:100%;
+      height:auto;
+      display:block;
+      object-fit:unset;
+    }
     .overlaySvg{
       position:absolute;
       inset:0;
       width:100%;
       height:100%;
       pointer-events:auto;
+    }
+    .overlaySvg .cell{
+      cursor:pointer;
+      -webkit-tap-highlight-color: transparent;
       touch-action: manipulation;
     }
+    .overlaySvg .state0{ fill: rgba(0,0,0,0.001); } /* يبقى قابل للنقر */
+    .overlaySvg .state1{ fill: rgba(243,231,166,.75); }
+    .overlaySvg .state2{ fill: rgba(26,163,74,.55); }
+    .overlaySvg .state3{ fill: rgba(242,140,0,.55); }
 
     .below{display:flex;gap:10px;flex-wrap:wrap;justify-content:center;align-items:stretch}
     .buzzBox{
@@ -90,6 +100,9 @@
     .qTitle{font-weight:bold;margin-bottom:8px}
     .qText{line-height:1.6}
     .smallNote{font-size:12px;opacity:.85;margin-top:8px}
+
+    .buzzRow{display:flex;gap:10px;flex-wrap:wrap;align-items:stretch;justify-content:center}
+    .nextQBtn{min-width:160px}
 
     .playerBtnWrap{margin-top:14px}
     .playerBigBtn{
@@ -200,83 +213,79 @@
 
     function cellKey(row,col){ return `${row}-${col}`; }
 
-    // ====== معايرة كتلة السداسيات داخل الصورة (كما عندك) ======
-    const CAL = {
-      W: 1536,
-      H: 862,
-      x0: 206,
-      y0: 42,
-      gridW: 1160,
-      gridH: 779
-    };
+    // ====== حل جذري: اكتشاف حدود كتلة السداسيات من نفس الصورة + SVG Polygons ======
+    const BBOX_CACHE = {}; // key = imgSrc
 
-    // هنا نستخدم Pointy-Top (مثل الشكل الأزرق الذي تريده)
-    // نقطته أعلى وأسفل
-    const POINTY_H_RATIO = 1.155; // تقريباً ارتفاع/عرض مناسب للخريطة
+    function detectHexBBox(img){
+      const nw = img.naturalWidth, nh = img.naturalHeight;
+      const maxW = 700;
+      const scale = Math.min(1, maxW / nw);
 
-    function layoutHexes(mapBoxEl){
-      const W = mapBoxEl.clientWidth;
-      const H = mapBoxEl.clientHeight;
+      const cw = Math.round(nw * scale);
+      const ch = Math.round(nh * scale);
 
-      const gridWScaled = W * (CAL.gridW / CAL.W);
-      const gridHScaled = H * (CAL.gridH / CAL.H);
+      const canvas = document.createElement("canvas");
+      canvas.width = cw; canvas.height = ch;
+      const ctx = canvas.getContext("2d", { willReadFrequently:true });
+      ctx.drawImage(img, 0, 0, cw, ch);
 
-      // 5.5 سداسي عرضياً بسبب إزاحة الصفوف
-      const wFromWidth = gridWScaled / 5.5;
+      const data = ctx.getImageData(0,0,cw,ch).data;
 
-      // رأسياً: 4 صفوف بارتفاع stepY = 0.75*h، والصف الخامس يكمل
-      // نعتمد h = w*POINTY_H_RATIO
-      const hFromWidth = wFromWidth * POINTY_H_RATIO;
+      let minX = cw, minY = ch, maxX = -1, maxY = -1;
+      let found = false;
 
-      const h = hFromWidth;
-      const w = h / POINTY_H_RATIO;
+      const step = 2;
+      for(let y=0; y<ch; y+=step){
+        for(let x=0; x<cw; x+=step){
+          const i = (y*cw + x) * 4;
+          const r = data[i], g = data[i+1], b = data[i+2];
+          const mx = Math.max(r,g,b), mn = Math.min(r,g,b);
+          const avg = (r+g+b)/3;
 
-      const baseX = W * (CAL.x0 / CAL.W);
-      const baseY = H * (CAL.y0 / CAL.H);
-
-      // ضبط مركزي بسيط
-      const usedGridW = 5.5 * w;
-      const usedGridH = (0.75 * h * 4) + (0.25 * h); // تقريباً لتوازن المساحة
-
-      const extraX = (gridWScaled - usedGridW) / 2;
-      const extraY = (gridHScaled - (4 * h)) / 2;
-
-      const marginX = baseX + extraX;
-      const marginY = baseY + extraY;
-
-      const stepY = h * 0.75;
-
-      const pos = [];
-      for(let row=0; row<5; row++){
-        for(let col=0; col<5; col++){
-          const left = marginX + col*w + (row%2)*(w/2);
-          const top  = marginY + row*stepY;
-          pos.push({row,col,left,top,width:w,height:h});
+          // يلتقط منطقة السداسيات البيضاء/الرمادية (ويستبعد الأخضر/البرتقالي)
+          if(avg > 180 && (mx - mn) < 60){
+            found = true;
+            if(x < minX) minX = x;
+            if(y < minY) minY = y;
+            if(x > maxX) maxX = x;
+            if(y > maxY) maxY = y;
+          }
         }
       }
-      return pos;
+
+      if(!found){
+        return { x0:0.12, y0:0.04, x1:0.90, y1:0.95 };
+      }
+
+      minX = Math.max(0, minX - 2);
+      minY = Math.max(0, minY - 2);
+      maxX = Math.min(cw - 1, maxX + 2);
+      maxY = Math.min(ch - 1, maxY + 2);
+
+      return {
+        x0: minX / cw,
+        y0: minY / ch,
+        x1: (maxX + 1) / cw,
+        y1: (maxY + 1) / ch,
+      };
     }
 
-    function fillForState(st){
-      if(st === 1) return "rgba(243,231,166,.75)";
-      if(st === 2) return "rgba(26,163,74,.55)";
-      if(st === 3) return "rgba(242,140,0,.55)";
-      return "rgba(0,0,0,0)";
+    function setStateClass(el, st){
+      el.classList.remove("state0","state1","state2","state3");
+      el.classList.add(`state${st}`);
     }
 
-    // يبني سداسي Pointy-Top داخل مستطيل (x,y,w,h)
-    function hexPointsPointy(x,y,w,h){
-      const xL = x + w*0.03;
-      const xR = x + w*0.97;
-      const xM = x + w*0.50;
-
-      const yT = y + h*0.00;
-      const yU = y + h*0.25;
-      const yD = y + h*0.75;
-      const yB = y + h*1.00;
-
-      // (50% 0) -> (97% 25) -> (97% 75) -> (50% 100) -> (3% 75) -> (3% 25)
-      return `${xM},${yT} ${xR},${yU} ${xR},${yD} ${xM},${yB} ${xL},${yD} ${xL},${yU}`;
+    // Pointy-Top (المطلوب مثل الأزرق)
+    function hexPointsPointyTop(x, y, w, h){
+      const pts = [
+        [x + w/2, y],
+        [x + w,   y + h*0.25],
+        [x + w,   y + h*0.75],
+        [x + w/2, y + h],
+        [x,       y + h*0.75],
+        [x,       y + h*0.25],
+      ];
+      return pts.map(p => `${p[0].toFixed(2)},${p[1].toFixed(2)}`).join(" ");
     }
 
     function renderHostLobby(room){
@@ -364,7 +373,7 @@
           <div id="mapScale" class="mapScale" style="--zoom:1">
             <div id="mapBox" class="mapBox">
               <img id="mapImg" src="" alt="">
-              <svg id="hexSvg" class="overlaySvg"></svg>
+              <svg id="overlay" class="overlaySvg"></svg>
             </div>
           </div>
         </div>
@@ -372,7 +381,11 @@
         <div style="height:10px"></div>
 
         <div class="below">
-          <div id="buzzBox" class="buzzBox buzzEmpty">—</div>
+          <div class="buzzRow" style="flex:1;min-width:260px">
+            <div id="buzzBox" class="buzzBox buzzEmpty">—</div>
+            ${isHost ? `<button id="nextQ" class="btn btnYellow nextQBtn">تغيير السؤال</button>` : ""}
+          </div>
+
           ${isHost ? `
             <div class="questionBox">
               <div class="qTitle">السؤال</div>
@@ -386,13 +399,6 @@
           `}
         </div>
 
-        ${isHost ? `
-          <div style="height:10px"></div>
-          <div class="row">
-            <button id="nextQ" class="btn btnYellow">تغيير السؤال</button>
-          </div>
-        ` : ""}
-
         ${(!isHost) ? `
           <div class="playerBtnWrap">
             <button id="buzzBtn" class="playerBigBtn"></button>
@@ -402,75 +408,101 @@
       `;
 
       const mapImg = document.getElementById("mapImg");
+      const overlay = document.getElementById("overlay");
       const mapBox = document.getElementById("mapBox");
       const mapScale = document.getElementById("mapScale");
       const zoom = document.getElementById("zoom");
-      const svg = document.getElementById("hexSvg");
 
       const activeMap = Number(room.activeMap || 0);
 
-      mapImg.src = [
+      // مسار الصور داخل مجلد maps وبامتداد jpeg
+      const src = ([
         "maps/map1.jpeg",
         "maps/map2.jpeg",
         "maps/map3.jpeg"
-      ][activeMap] || "maps/map1.jpeg";
+      ][activeMap] || "maps/map1.jpeg");
 
-      // لاعب: يمنع أي تفاعل مع السداسيات نهائياً
-      svg.style.pointerEvents = isHost ? "auto" : "none";
+      mapImg.src = src;
 
-      const mapStates = (room.mapStates && room.mapStates[String(activeMap)]) ? room.mapStates[String(activeMap)] : {};
+      // إنشاء 25 سداسي كـ SVG Polygons
+      overlay.innerHTML = "";
+      overlay.setAttribute("xmlns", "http://www.w3.org/2000/svg");
 
-      function placeHexes(){
-        const W = mapBox.clientWidth;
-        const H = mapBox.clientHeight;
-
-        svg.setAttribute("viewBox", `0 0 ${W} ${H}`);
-        svg.innerHTML = "";
-
-        const pos = layoutHexes(mapBox);
-
-        for(const p of pos){
-          const k = cellKey(p.row,p.col);
-          const st = Number(mapStates?.[k] ?? 0);
-
-          const poly = document.createElementNS("http://www.w3.org/2000/svg", "polygon");
-          poly.setAttribute("points", hexPointsPointy(p.left, p.top, p.width, p.height));
-          poly.setAttribute("fill", fillForState(st));
-          poly.setAttribute("stroke", "rgba(0,0,0,0)");
-          poly.setAttribute("data-row", String(p.row));
-          poly.setAttribute("data-col", String(p.col));
-          poly.style.cursor = isHost ? "pointer" : "default";
-          poly.style.pointerEvents = isHost ? "all" : "none";
-
-          if(isHost){
-            poly.addEventListener("click", async (e) => {
-              e.preventDefault();
-              e.stopPropagation();
-              if(room.status !== "started") return;
-
-              const r = Number(poly.getAttribute("data-row"));
-              const c = Number(poly.getAttribute("data-col"));
-              const kk = cellKey(r,c);
-
-              const curSt = Number(mapStates?.[kk] ?? 0);
-              const next = (curSt + 1) % 4;
-
-              const letter = MAPS[activeMap][r][c];
-
-              const updates = {};
-              updates[`rooms/${code}/mapStates/${activeMap}/${kk}`] = next;
-              updates[`rooms/${code}/buzzer`] = null;
-              updates[`rooms/${code}/current`] = { letter, qIndex: 0, row: r, col: c, map: activeMap };
-
-              await update(ref(db), updates);
-            });
-          }
-
-          svg.appendChild(poly);
+      const svgNS = "http://www.w3.org/2000/svg";
+      for(let row=0; row<5; row++){
+        for(let col=0; col<5; col++){
+          const poly = document.createElementNS(svgNS, "polygon");
+          poly.classList.add("cell", "state0");
+          poly.setAttribute("data-row", row);
+          poly.setAttribute("data-col", col);
+          overlay.appendChild(poly);
         }
       }
 
-      // عرض من ضغط أولاً
+      overlay.style.pointerEvents = isHost ? "auto" : "none";
+
+      function placeHexes(){
+        const W = mapImg.clientWidth;
+        const H = mapImg.clientHeight;
+        if(!W || !H) return;
+
+        overlay.setAttribute("viewBox", `0 0 ${W} ${H}`);
+        overlay.setAttribute("preserveAspectRatio", "none");
+
+        const bbox = BBOX_CACHE[src];
+        if(!bbox) return;
+
+        const x0 = bbox.x0 * W;
+        const y0 = bbox.y0 * H;
+        const x1 = bbox.x1 * W;
+        const y1 = bbox.y1 * H;
+
+        const gridW = x1 - x0;
+        const gridH = y1 - y0;
+
+        // هندسة الخريطة: 5.5w عرض + 4h ارتفاع (Pointy-Top)
+        const w = gridW / 5.5;
+        const h = gridH / 4.0;
+        const stepY = h * 0.75;
+
+        const cells = overlay.querySelectorAll(".cell");
+        let i = 0;
+        for(let row=0; row<5; row++){
+          for(let col=0; col<5; col++){
+            const left = x0 + col*w + (row%2)*(w/2);
+            const top  = y0 + row*stepY;
+            const poly = cells[i++];
+            poly.setAttribute("points", hexPointsPointyTop(left, top, w, h));
+          }
+        }
+      }
+
+      function onMapReady(){
+        // اكتشاف bbox مرة واحدة لكل صورة
+        if(!BBOX_CACHE[src]){
+          BBOX_CACHE[src] = detectHexBBox(mapImg);
+        }
+        requestAnimationFrame(() => placeHexes());
+      }
+
+      if(mapImg.complete){
+        onMapReady();
+      }else{
+        mapImg.addEventListener("load", onMapReady, { once:true });
+      }
+      window.addEventListener("resize", placeHexes);
+
+      // تطبيق حالات التلوين من قاعدة البيانات
+      const mapStates = (room.mapStates && room.mapStates[String(activeMap)]) ? room.mapStates[String(activeMap)] : {};
+      overlay.querySelectorAll(".cell").forEach(cell => {
+        const r = Number(cell.getAttribute("data-row"));
+        const c = Number(cell.getAttribute("data-col"));
+        const k = cellKey(r,c);
+        const st = Number(mapStates?.[k] ?? 0);
+        setStateClass(cell, st);
+      });
+
+      // عرض من ضغط أولًا
       const buzzBox = document.getElementById("buzzBox");
       const buzzer = room.buzzer;
 
@@ -484,7 +516,7 @@
         buzzBox.textContent = "—";
       }
 
-      // سؤال المقدم
+      // السؤال للمقدم
       if(isHost){
         const qText = document.getElementById("qText");
         const cur = room.current || {};
@@ -497,10 +529,12 @@
         }
       }
 
+      // زوم
       zoom.addEventListener("input", () => {
         mapScale.style.setProperty("--zoom", zoom.value);
       });
 
+      // تغيير الخريطة (مقدم فقط)
       const mapBtn = document.getElementById("mapBtn");
       if(mapBtn){
         mapBtn.addEventListener("click", async () => {
@@ -513,6 +547,7 @@
         });
       }
 
+      // تجميد زر اللاعبين (مقدم فقط) + يمسح اسم الضاغط
       const freezeBtn = document.getElementById("freezeBtn");
       if(freezeBtn){
         freezeBtn.addEventListener("click", async () => {
@@ -523,6 +558,7 @@
         });
       }
 
+      // تغيير السؤال (مقدم فقط) بجانب مربع اسم الضاغط الأول
       const nextQ = document.getElementById("nextQ");
       if(nextQ){
         nextQ.addEventListener("click", async () => {
@@ -535,6 +571,33 @@
         });
       }
 
+      // ضغط خلية (مقدم فقط): يلوّن + يحدد حرف + يمسح البازر
+      if(isHost){
+        overlay.querySelectorAll(".cell").forEach(cell => {
+          cell.addEventListener("click", async (e) => {
+            e.preventDefault();
+            if(room.status !== "started") return;
+
+            const r = Number(cell.getAttribute("data-row"));
+            const c = Number(cell.getAttribute("data-col"));
+            const k = cellKey(r,c);
+
+            const st = Number(mapStates?.[k] ?? 0);
+            const next = (st + 1) % 4;
+
+            const letter = MAPS[activeMap][r][c];
+
+            const updates = {};
+            updates[`rooms/${code}/mapStates/${activeMap}/${k}`] = next;
+            updates[`rooms/${code}/buzzer`] = null;
+            updates[`rooms/${code}/current`] = { letter, qIndex: 0, row: r, col: c, map: activeMap };
+
+            await update(ref(db), updates);
+          });
+        });
+      }
+
+      // زر اللاعب الكبير (لاعب فقط)
       const buzzBtn = document.getElementById("buzzBtn");
       if(buzzBtn){
         const disabled = (!started) || room.freeze || !me || !me.name;
@@ -554,16 +617,9 @@
           });
         });
       }
-
-      // يرسم السداسيات بعد تحميل الصورة + عند تغيير حجم الشاشة
-      if(mapImg.complete){
-        placeHexes();
-      }else{
-        mapImg.addEventListener("load", placeHexes, { once:true });
-      }
-      window.addEventListener("resize", placeHexes);
     }
 
+    // مراقبة الغرفة
     onValue(roomRef, (snap) => {
       if(!snap.exists()){
         main.textContent = "اللعبة غير موجودة (رمز غير صحيح).";
@@ -585,6 +641,7 @@
         return;
       }
 
+      // لاعب
       const players = room.players || {};
       const me = pid ? players[pid] : null;
 
