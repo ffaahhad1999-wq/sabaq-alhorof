@@ -172,8 +172,7 @@
       appId: "1:1053646928152:web:032d50148c3a4f1148066d"
     };
 
-    // ✅ تم تعديل MAPS فقط لتطابق ترتيب الحروف الذي أرسلته (يمين→يسار لكل صف في الصورة)
-    //    وتم إزالة أي "ت" غير موجودة في الخرائط واستبدالها بـ "ث" في أماكنها الصحيحة.
+    // ✅ الخرائط كما عدّلتها أنت (كل صف مكتوب من اليمين إلى اليسار)
     const MAPS = [
       // الخريطة الأولى
       [
@@ -201,11 +200,20 @@
       ]
     ];
 
+    // ✅ (حل المشكلة) ربط اختيار السؤال بالحرف الصحيح حسب مكانه على الخريطة:
+    // لأن خلايا الـ SVG تُحسب أعمدتها من اليسار إلى اليمين (col=0 يسار)،
+    // بينما صفوف MAPS مكتوبة من اليمين إلى اليسار، لذلك نقلب العمود.
+    function getMapLetter(mapIndex, row, col){
+      const rowArr = MAPS?.[mapIndex]?.[row];
+      if(!rowArr) return null;
+      return rowArr[4 - col]; // قلب العمود فقط
+    }
+
     // أسئلة مؤقتة (هيكل فقط)
     const QUESTIONS = {};
     const ALL_LETTERS = Array.from(new Set(MAPS.flat(2)));
     for(const L of ALL_LETTERS){
-      QUESTIONS[L] = Array.from({length:25}, (_,i) => `سؤال بحرف ${L}`); // مكان جاهز للمحتوى لاحقًا
+      QUESTIONS[L] = Array.from({length:25}, () => `سؤال بحرف ${L}`);
     }
 
     const app = initializeApp(firebaseConfig);
@@ -404,7 +412,7 @@
         <div class="row" style="justify-content:space-between">
           <div class="row">
             ${isHost ? `<button id="mapBtn" class="btn btnYellow">تغيير الخريطة</button>` : ""}
-            <input id="zoom" type="range" min="0.8" max="1.35" step="0.01" value="1" />
+            <input id="zoom" type="range" />
             ${isHost ? `<button id="freezeBtn" class="btn ${room.freeze ? "btnRed" : "btnGreen"}">${room.freeze ? "مجمّد" : "مفعل"}</button>` : ""}
           </div>
         </div>
@@ -551,6 +559,10 @@
       }
 
       // زوم
+      zoom.setAttribute("min","0.8");
+      zoom.setAttribute("max","1.35");
+      zoom.setAttribute("step","0.01");
+      zoom.value = "1";
       zoom.addEventListener("input", () => {
         mapScale.style.setProperty("--zoom", zoom.value);
       });
@@ -603,7 +615,8 @@
             const st = Number(mapStates?.[k] ?? 0);
             const next = (st + 1) % 4;
 
-            const letter = MAPS[activeMap][r][c];
+            // ✅ هنا التعديل الوحيد لربط الحرف الصحيح بمكانه
+            const letter = getMapLetter(activeMap, r, c);
 
             const updates = {};
             updates[`rooms/${code}/mapStates/${activeMap}/${k}`] = next;
