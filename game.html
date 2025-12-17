@@ -196,19 +196,56 @@
       ]
     ];
 
-    // ✅ نظام أسئلة جاهز (بدون محتوى فعلي) — 25 سؤال لكل حرف
+    /* =========================================================
+       ✅✅✅ جزء الأسئلة فقط (هنا مكان إدخال المحتوى)
+       - أدخل أسئلة/أجوبة كل حرف داخل QUESTIONS_CONTENT
+       - النظام يضمن 25 لكل حرف (يكمل فراغات إذا نقص / يقص إذا زاد)
+       - المقدم يرى السؤال فقط بدون أرقام
+    ========================================================= */
+
+    // 1) ضع محتوى الأسئلة هنا فقط:
+    // ملاحظة: لا تكتب إلا الحروف الموجودة في الخرائط.
+    // كل عنصر: { q: "نص السؤال", a: "نص الإجابة" }
+    const QUESTIONS_CONTENT = {
+      // مثال (امسحه إذا تبي):
+      // "أ": [
+      //   { q: "عاصمة المملكة العربية السعودية؟", a: "الرياض" }
+      // ]
+    };
+
+    // 2) تنظيف النصوص (عشان ما يطلع تشويه بالحروف/التشكيل)
+    function cleanArabicText(s){
+      return String(s ?? "")
+        .replace(/[\u064B-\u065F\u0670\u06D6-\u06ED]/g, "")  // حركات/تشكيل
+        .replace(/\u0640/g, "")                              // تطويل
+        .replace(/[^\S\r\n]+/g, " ")                         // توحيد مسافات
+        .trim();
+    }
+
+    // 3) بناء النظام النهائي: 25 سؤال/جواب لكل حرف في الخرائط فقط
     const QUESTIONS = {};
     const ALL_LETTERS = Array.from(new Set(MAPS.flat(2)));
 
-    function createEmptyQuestionsForLetter(letter, count = 25){
-      return Array.from({ length: count }, () => ({
-        q: "",
-        a: ""
-      }));
+    function createEmptyQuestionsForLetter(count = 25){
+      return Array.from({ length: count }, () => ({ q: "", a: "" }));
+    }
+
+    function buildQuestionsForLetter(letter, count = 25){
+      const base = createEmptyQuestionsForLetter(count);
+      const src = Array.isArray(QUESTIONS_CONTENT?.[letter]) ? QUESTIONS_CONTENT[letter] : [];
+
+      for(let i=0; i<Math.min(count, src.length); i++){
+        const item = src[i] || {};
+        base[i] = {
+          q: cleanArabicText(item.q),
+          a: cleanArabicText(item.a)
+        };
+      }
+      return base;
     }
 
     for(const L of ALL_LETTERS){
-      QUESTIONS[L] = createEmptyQuestionsForLetter(L, 25);
+      QUESTIONS[L] = buildQuestionsForLetter(L, 25);
     }
 
     // ✅ عشوائية تلقائية (بدون زر) وترتيب ثابت داخل الغرفة لكل حرف
@@ -247,6 +284,10 @@
       const seed = (base ^ mix) >>> 0;
       return shuffledOrder(total, seed);
     }
+
+    /* =========================================================
+       ✅ نهاية جزء الأسئلة فقط
+    ========================================================= */
 
     const app = initializeApp(firebaseConfig);
     const db = getDatabase(app);
@@ -626,7 +667,7 @@
         });
       }
 
-      // ✅ تغيير السؤال: ينتقل للي بعده حتى 25 ثم يرجع للأول (بدون ما نعرض أرقام)
+      // ✅ تغيير السؤال: ينتقل للي بعده حتى 25 ثم يرجع للأول
       const nextQ = document.getElementById("nextQ");
       if(nextQ){
         nextQ.addEventListener("click", async () => {
@@ -639,7 +680,7 @@
         });
       }
 
-      // كليك المقدم على السداسي: يلوّن + يحدد حرف + يمسح البازر + يرجع لأول سؤال (داخليًا)
+      // كليك المقدم على السداسي: يلوّن + يحدد حرف + يمسح البازر + يرجع لأول سؤال
       if(isHost){
         overlay.querySelectorAll(".cell").forEach(cell => {
           cell.addEventListener("click", async (e) => {
