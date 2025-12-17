@@ -172,8 +172,9 @@
       appId: "1:1053646928152:web:032d50148c3a4f1148066d"
     };
 
-    // (تبقى كما هي - ليست ضمن حل المشكلة)
+    // ✅ الخرائط بالحروف (تم تبديل ترتيب الثانية والثالثة فقط كما ذكرت)
     const MAPS = [
+      // الخريطة الأولى (map1)
       [
         ["ر","ب","أ","ج","ذ"],
         ["س","ل","ز","ح","ي"],
@@ -181,45 +182,30 @@
         ["غ","ط","د","ن","ص"],
         ["و","م","هـ","خ","ك"]
       ],
-      [
-        ["ه","د","ث","أ","ش"],
-        ["ك","ن","ض","ح","ي"],
-        ["ع","ر","ق","ظ","غ"],
-        ["و","ط","س","ز","ص"],
-        ["ج","م","ب","ل","ذ"]
-      ],
+      // الخريطة الثانية (map2) ← كانت الثالثة سابقاً
       [
         ["ب","د","و","ص","ق"],
         ["ث","ه","ض","ي","ح"],
         ["م","ز","ش","ط","ك"],
         ["ث","ظ","س","ر","أ"],
         ["ج","ع","هـ","غ","ذ"]
+      ],
+      // الخريطة الثالثة (map3) ← كانت الثانية سابقاً
+      [
+        ["ه","د","ث","أ","ش"],
+        ["ك","ن","ض","ح","ي"],
+        ["ع","ر","ق","ظ","غ"],
+        ["و","ط","س","ز","ص"],
+        ["ج","م","ب","ل","ذ"]
       ]
     ];
 
-    function cellKey(row,col){ return `${row}-${col}`; }
-
-    /* =========================================================
-       ✅ حل جذري لمشكلة اختلاف الحرف بعد تغيير الخريطة:
-       - ربط الأسئلة بالمكان (map + row-col) بدل الاعتماد على الحرف.
-       - كل سداسي في كل خريطة له 25 سؤال خاص به.
-       - تغيير السؤال: ينتقل للسؤال التالي حتى 25 ثم يعيد من البداية.
-       ========================================================= */
-
-    // هيكل الأسئلة: لكل خريطة -> لكل خلية "row-col" -> 25 سؤال
-    const QUESTIONS_BY_CELL = Array.from({length:3}, () => ({}));
-    for(let m=0; m<3; m++){
-      for(let r=0; r<5; r++){
-        for(let c=0; c<5; c++){
-          QUESTIONS_BY_CELL[m][cellKey(r,c)] = Array.from({length:25}, () => `سؤال`); // مكان جاهز للمحتوى لاحقًا
-        }
-      }
-    }
-
-    function getCellQuestions(mapIndex, row, col){
-      const k = cellKey(row, col);
-      const mapObj = QUESTIONS_BY_CELL[Number(mapIndex)];
-      return mapObj?.[k] || [];
+    // ✅ نظام الأسئلة حسب الحرف (هيكل فقط: 25 سؤال لكل حرف)
+    // ملاحظة: نخزنها ككائنات {q,a,level} جاهزة لإضافة الإجابات لاحقاً
+    const QUESTIONS = {};
+    const ALL_LETTERS = Array.from(new Set(MAPS.flat(2)));
+    for(const L of ALL_LETTERS){
+      QUESTIONS[L] = Array.from({length:25}, () => ({ q:`سؤال بحرف ${L}`, a:"", level:"" }));
     }
 
     const app = initializeApp(firebaseConfig);
@@ -250,6 +236,8 @@
         "&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#039;"
       }[c]));
     }
+
+    function cellKey(row,col){ return `${row}-${col}`; }
 
     // اكتشاف حدود كتلة السداسيات من نفس الصورة
     const BBOX_CACHE = {}; // key = imgSrc
@@ -382,8 +370,7 @@
           activeMap: 0,
           freeze: false,
           buzzer: null,
-          // ✅ current صار يعتمد على المكان بدل الحرف
-          current: { map: 0, row: null, col: null, qIndex: 0 }
+          current: { letter: null, qIndex: 0, row: null, col: null, map: 0 }
         });
       });
     }
@@ -457,11 +444,12 @@
 
       const activeMap = Number(room.activeMap || 0);
 
+      // ✅ روابط الخرائط كما طلبت (بالترتيب map1 ثم map2 ثم map3)
       const src = ([
-        "maps/map1.jpeg",
-        "maps/map2.jpeg",
-        "maps/map3.jpeg"
-      ][activeMap] || "maps/map1.jpeg");
+        "https://raw.githubusercontent.com/ffaahhad1999-wq/sabaq-alhorof/main/maps/map1.jpeg",
+        "https://raw.githubusercontent.com/ffaahhad1999-wq/sabaq-alhorof/main/maps/map2.jpeg",
+        "https://raw.githubusercontent.com/ffaahhad1999-wq/sabaq-alhorof/main/maps/map3.jpeg"
+      ][activeMap] || "https://raw.githubusercontent.com/ffaahhad1999-wq/sabaq-alhorof/main/maps/map1.jpeg");
 
       mapImg.src = src;
 
@@ -550,14 +538,14 @@
         buzzBox.textContent = "—";
       }
 
-      // ✅ سؤال المقدم (صار مربوط بالمكان: map+row+col)
+      // ✅ سؤال المقدم حسب الحرف
       if(isHost){
         const qText = document.getElementById("qText");
         const cur = room.current || {};
-        if(cur && cur.map != null && cur.row != null && cur.col != null){
-          const list = getCellQuestions(cur.map, cur.row, cur.col);
+        if(cur.letter){
+          const list = QUESTIONS[cur.letter] || [];
           const idx = Number(cur.qIndex || 0) % Math.max(list.length,1);
-          qText.textContent = list.length ? list[idx] : `لا يوجد سؤال`;
+          qText.textContent = list.length ? (list[idx].q || "") : `لا يوجد سؤال لحرف ${cur.letter}`;
         }else{
           qText.textContent = "اختر حرفًا من الخريطة";
         }
@@ -576,8 +564,7 @@
           await update(roomRef, {
             activeMap: next,
             buzzer: null,
-            // ✅ current يعتمد على المكان
-            current: { map: next, row: null, col: null, qIndex: 0 }
+            current: { letter: null, qIndex: 0, row: null, col: null, map: next }
           });
         });
       }
@@ -590,20 +577,20 @@
         });
       }
 
-      // ✅ تغيير السؤال (صار على نفس الخلية)
+      // ✅ تغيير السؤال حسب نفس الحرف
       const nextQ = document.getElementById("nextQ");
       if(nextQ){
         nextQ.addEventListener("click", async () => {
           const cur = room.current || {};
-          if(cur.map == null || cur.row == null || cur.col == null) return;
-          const list = getCellQuestions(cur.map, cur.row, cur.col);
+          if(!cur.letter) return;
+          const list = QUESTIONS[cur.letter] || [];
           if(!list.length) return;
           const nextIndex = (Number(cur.qIndex || 0) + 1) % list.length;
           await update(roomRef, { current: { ...cur, qIndex: nextIndex } });
         });
       }
 
-      // كليك المقدم على السداسي: يلوّن + يحدد (المكان) + يمسح البازر
+      // كليك المقدم على السداسي: يلوّن + يحدد حرف + يمسح البازر
       if(isHost){
         overlay.querySelectorAll(".cell").forEach(cell => {
           cell.addEventListener("click", async (e) => {
@@ -617,12 +604,12 @@
             const st = Number(mapStates?.[k] ?? 0);
             const next = (st + 1) % 4;
 
+            const letter = MAPS[activeMap][r][c];
+
             const updates = {};
             updates[`rooms/${code}/mapStates/${activeMap}/${k}`] = next;
             updates[`rooms/${code}/buzzer`] = null;
-
-            // ✅ أهم سطر: current صار مربوط بالخلية نفسها
-            updates[`rooms/${code}/current`] = { map: activeMap, row: r, col: c, qIndex: 0 };
+            updates[`rooms/${code}/current`] = { letter, qIndex: 0, row: r, col: c, map: activeMap };
 
             await update(ref(db), updates);
           });
