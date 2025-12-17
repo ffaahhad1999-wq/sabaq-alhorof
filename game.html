@@ -172,39 +172,40 @@
       appId: "1:1053646928152:web:032d50148c3a4f1148066d"
     };
 
+    // ✅ تم تعديل MAPS فقط لتطابق ترتيب الحروف الذي أرسلته (يمين→يسار لكل صف في الصورة)
+    //    وتم إزالة أي "ت" غير موجودة في الخرائط واستبدالها بـ "ث" في أماكنها الصحيحة.
     const MAPS = [
+      // الخريطة الأولى
       [
-        ["ذ","ج","أ","ب","ر"],
-        ["ي","ح","ز","ل","س"],
-        ["ث","ظ","ق","ض","ع"],
-        ["ص","ن","د","ط","غ"],
-        ["ك","خ","هـ","م","و"]
+        ["ر","ب","أ","ج","ذ"],
+        ["س","ل","ز","ح","ي"],
+        ["ع","ض","ق","ظ","ث"],
+        ["غ","ط","د","ن","ص"],
+        ["و","م","هـ","خ","ك"]
       ],
+      // الخريطة الثانية
       [
-        ["ق","ص","و","د","ب"],
-        ["ح","ي","ض","هـ","ت"],
-        ["ك","ط","ش","ز","م"],
-        ["أ","ر","س","ظ","ث"],
-        ["ذ","غ","هـ","ع","ج"]
+        ["ه","د","ث","أ","ش"],
+        ["ك","ن","ض","ح","ي"],
+        ["ع","ر","ق","ظ","غ"],
+        ["و","ط","س","ز","ص"],
+        ["ج","م","ب","ل","ذ"]
       ],
+      // الخريطة الثالثة
       [
-        ["ش","أ","ت","د","هـ"],
-        ["ي","ح","ض","ن","ك"],
-        ["غ","ظ","ق","ر","ع"],
-        ["ص","ز","س","ط","و"],
-        ["ذ","ل","ب","م","ج"]
+        ["ب","د","و","ص","ق"],
+        ["ث","ه","ض","ي","ح"],
+        ["م","ز","ش","ط","ك"],
+        ["ث","ظ","س","ر","أ"],
+        ["ج","ع","هـ","غ","ذ"]
       ]
     ];
 
-    // أسئلة مؤقتة (إلى أن ترسل PDF)
+    // أسئلة مؤقتة (هيكل فقط)
     const QUESTIONS = {};
     const ALL_LETTERS = Array.from(new Set(MAPS.flat(2)));
     for(const L of ALL_LETTERS){
-      QUESTIONS[L] = [
-        `سؤال 1 بحرف ${L}`,
-        `سؤال 2 بحرف ${L}`,
-        `سؤال 3 بحرف ${L}`
-      ];
+      QUESTIONS[L] = Array.from({length:25}, (_,i) => `سؤال بحرف ${L}`); // مكان جاهز للمحتوى لاحقًا
     }
 
     const app = initializeApp(firebaseConfig);
@@ -297,7 +298,6 @@
     function setStateClass(el, st){
       el.classList.remove("state0","state1","state2","state3","pulse");
       el.classList.add(`state${st}`);
-      // ✅ الحركة فقط للأصفر (state1)
       if(st === 1) el.classList.add("pulse");
     }
 
@@ -386,7 +386,6 @@
       const started = room.status === "started";
 
       main.innerHTML = `
-        <!-- ✅ هذا كان فوق الخريطة: صرنا نخلي هنا فقط الرمز -->
         <div class="row" style="justify-content:space-between">
           <div style="font-size:14px;opacity:.9">رمز: <b>${escapeHtml(room.code)}</b></div>
           <div></div>
@@ -401,7 +400,6 @@
           </div>
         </div>
 
-        <!-- ✅ (1) نقلنا أزرار فوق الخريطة لتصبح تحت الخريطة مباشرة -->
         <div style="height:10px"></div>
         <div class="row" style="justify-content:space-between">
           <div class="row">
@@ -411,7 +409,6 @@
           </div>
         </div>
 
-        <!-- ✅ (2) الأزرار/العناصر التي كانت تحت الخريطة صارت تحت الأزرار المنقولة -->
         <div style="height:10px"></div>
         <div class="below">
           <div class="buzzRow" style="flex:1;min-width:260px">
@@ -447,12 +444,11 @@
 
       const activeMap = Number(room.activeMap || 0);
 
-      /* ✅✅✅ التعديل الوحيد لحل مشكلة اختلاف الحرف بعد تغيير الخريطة */
       const src = ([
-        "maps/map3.jpeg", // MAPS[0]
-        "maps/map1.jpeg", // MAPS[1]
-        "maps/map2.jpeg"  // MAPS[2]
-      ][activeMap] || "maps/map3.jpeg");
+        "maps/map1.jpeg",
+        "maps/map2.jpeg",
+        "maps/map3.jpeg"
+      ][activeMap] || "maps/map1.jpeg");
 
       mapImg.src = src;
 
