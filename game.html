@@ -15,13 +15,20 @@
       --orange:#f28c00;
       --red:#c01818;
 
-      /* ألوان التلوين الجديدة (مطابقة تقريباً لصورتك) */
-      --overlay-green: rgba(67,147,45,.55);   /* أخضر غامق مع وضوح الحرف */
-      --overlay-orange: rgba(237,137,51,.55); /* برتقالي غامق مع وضوح الحرف */
+      /* درجات الألوان المطلوبة (مطابقة لصورتك تقريباً) */
+      --mapGreenRGB: 89,145,46;   /* #59912E */
+      --mapOrangeRGB: 237,137,51; /* #ED8933 */
+      --paleRGB: 255,231,153;
 
-      /* أصفر أوضح + نبض */
-      --overlay-pale-a: rgba(255, 232, 110, .35);
-      --overlay-pale-b: rgba(255, 232, 110, .92);
+      /* شكل السداسي (مثل اللي عندك الآن) */
+      --hex-clip: polygon(
+        25% 0%,
+        75% 0%,
+        100% 50%,
+        75% 100%,
+        25% 100%,
+        0% 50%
+      );
     }
 
     body{margin:0;background:var(--bg);font-family:Arial, sans-serif;color:#fff;text-align:center}
@@ -38,7 +45,9 @@
     }
 
     .row{display:flex;gap:10px;flex-wrap:wrap;justify-content:center;align-items:center}
-    .btn{padding:12px 14px;font-size:16px;border:none;border-radius:10px;cursor:pointer}
+    .btn{
+      padding:12px 14px;font-size:16px;border:none;border-radius:10px;cursor:pointer
+    }
     .btnYellow{background:var(--yellow);color:#000}
     .btnGreen{background:var(--green);color:#fff}
     .btnRed{background:var(--red);color:#fff}
@@ -79,6 +88,9 @@
       pointer-events:auto;
     }
 
+    /* ✅ حل جذري للتناسق:
+       - زر النقر نفسه سداسي (للنقر الصحيح)
+       - اللون يُرسم داخل سداسي أصغر (inset) عشان ما يبان اختلاف الحواف/الحدود */
     .hexBtn{
       position:absolute;
       border:none;
@@ -86,39 +98,43 @@
       margin:0;
       background:transparent;
       cursor:pointer;
-
-      /* الشكل الصحيح Flat-Top مطابق للخريطة */
-      clip-path: polygon(
-        25% 0%,
-        75% 0%,
-        100% 50%,
-        75% 100%,
-        25% 100%,
-        0% 50%
-      );
-
+      clip-path: var(--hex-clip);
       user-select:none;
       -webkit-tap-highlight-color: transparent;
       touch-action: manipulation;
       pointer-events:auto;
+      outline:none;
     }
 
+    .hexBtn::before{
+      content:"";
+      position:absolute;
+      inset:7%;                 /* ✅ يصغّر اللون داخل السداسي ويحافظ على الحدود */
+      clip-path: var(--hex-clip);
+      background:transparent;
+      pointer-events:none;
+    }
+
+    /* لا نلوّن الزر نفسه — فقط الـ ::before */
     .hexState0{background:transparent}
+    .hexState1{background:transparent}
+    .hexState2{background:transparent}
+    .hexState3{background:transparent}
 
-    /* ✅ الأصفر الباهت: أوضح + حركة متكررة */
-    .hexState1{
-      background: var(--overlay-pale-b);
-      animation: palePulse 1.05s ease-in-out infinite;
+    /* ✅ ألوان أغمق + وضوح الحرف (شفافية موزونة) */
+    .hexState2::before{ background: rgba(var(--mapGreenRGB), 0.55); }
+    .hexState3::before{ background: rgba(var(--mapOrangeRGB), 0.55); }
+
+    /* ✅ الأصفر الباهت أوضح + حركة اختفاء/رجوع (فقط للأصفر) */
+    .hexState1::before{
+      background: rgba(var(--paleRGB), 0.85);
+      animation: palePulse 1.1s ease-in-out infinite;
     }
-
-    /* ✅ الأخضر والبرتقالي: أغمق (بدون حركة) */
-    .hexState2{background: var(--overlay-green)}
-    .hexState3{background: var(--overlay-orange)}
 
     @keyframes palePulse{
-      0%   { background: var(--overlay-pale-a); }
-      50%  { background: var(--overlay-pale-b); }
-      100% { background: var(--overlay-pale-a); }
+      0%   { opacity: 0.25; }
+      50%  { opacity: 0.95; }
+      100% { opacity: 0.25; }
     }
 
     .below{
@@ -205,6 +221,7 @@
       ]
     ];
 
+    // أسئلة مؤقتة
     const QUESTIONS = {};
     const ALL_LETTERS = Array.from(new Set(MAPS.flat(2)));
     for(const L of ALL_LETTERS){
@@ -246,6 +263,7 @@
 
     function cellKey(row,col){ return `${row}-${col}`; }
 
+    // ====== نفس المعايرة التي عندك ======
     const CAL = { W: 1536, H: 862, x0: 206, y0: 42, gridW: 1160, gridH: 779 };
     const SQRT3_OVER_2 = 0.8660254037844386;
     const GRID_WIDTH_IN_HEX = 5.5;
@@ -289,6 +307,7 @@
     function renderHostLobby(room){
       const players = room.players || {};
       const list = Object.entries(players).map(([id,p]) => ({id, ...p}));
+
       const green = list.filter(p => p.team === "green");
       const orange = list.filter(p => p.team === "orange");
 
@@ -459,7 +478,6 @@
 
       const buzzBox = document.getElementById("buzzBox");
       const buzzer = room.buzzer;
-
       if(buzzer && buzzer.name){
         buzzBox.classList.remove("buzzEmpty");
         buzzBox.style.background = teamColor(buzzer.team);
