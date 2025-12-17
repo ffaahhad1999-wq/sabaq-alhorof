@@ -1,17 +1,42 @@
 <!DOCTYPE html>
 <html lang="ar" dir="rtl">
 <head>
-  <meta charset="UTF-8">
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <title>سباق الحروف</title>
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <style>
-    body{margin:0;background:#1f4fa3;color:#fff;font-family:Arial;text-align:center}
-    h1{margin-top:60px}
-    .btn{margin-top:40px;padding:16px;width:80%;max-width:400px;background:#f4c400;border:none;border-radius:12px;font-size:20px;cursor:pointer}
+    :root{
+      --bg:#1f4fa3;
+      --yellow:#f4c400;
+      --card:#ffffff;
+      --text:#111;
+    }
+    body{margin:0;background:var(--bg);font-family:Arial, sans-serif;color:#fff;text-align:center}
+    header{position:relative;padding:18px 16px 0}
+    .logo{position:absolute;left:14px;top:14px;width:44px;height:44px;object-fit:contain}
+    h1{margin:18px 0 14px;color:var(--yellow);font-size:34px}
+    .wrap{width:92%;max-width:520px;margin:0 auto}
+    .btn{
+      width:100%;padding:16px;margin:10px 0;
+      font-size:18px;border:none;border-radius:12px;cursor:pointer;
+      background:var(--yellow);color:#000
+    }
+    .link{display:block;margin-top:10px;color:#fff;text-decoration:underline;font-size:16px}
+    footer{position:fixed;left:0;right:0;bottom:10px;font-size:13px;opacity:.85}
   </style>
 </head>
 <body>
-  <h1>سباق الحروف</h1>
-  <button class="btn" onclick="location.href='create.html'">إنشاء لعبة</button>
+  <header>
+    <img class="logo" src="" alt="">
+    <h1>سباق الحروف</h1>
+  </header>
+
+  <div class="wrap">
+    <button class="btn" onclick="location.href='create.html'">إنشاء لعبة</button>
+    <button class="btn" onclick="location.href='join.html'">الدخول إلى لعبة</button>
+    <a class="link" href="https://sandooq-m.com" target="_blank" rel="noopener">اشتري اللعبة</a>
+  </div>
+
+  <footer>© جميع الحقوق محفوظة لمتجر صندوق المسابقات 2024</footer>
 </body>
 </html>
