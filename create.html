@@ -1,80 +1,125 @@
 <!DOCTYPE html>
 <html lang="ar" dir="rtl">
 <head>
-  <meta charset="UTF-8">
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <title>إنشاء لعبة</title>
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <style>
-    body{margin:0;background:#1f4fa3;color:#fff;font-family:Arial;text-align:center}
-    .box{background:#fff;color:#000;width:90%;max-width:420px;margin:40px auto;padding:20px;border-radius:12px}
-    input{width:100%;padding:12px;margin:10px 0;font-size:16px;box-sizing:border-box}
-    button{width:100%;padding:14px;font-size:18px;background:#f4c400;border:none;border-radius:10px;cursor:pointer}
-    .note{font-size:13px;margin-top:10px;color:#333}
-    .err{margin-top:10px;color:#b00020;font-size:14px;white-space:pre-wrap}
+    :root{
+      --bg:#1f4fa3;
+      --yellow:#f4c400;
+      --card:#ffffff;
+      --text:#111;
+      --muted:#666;
+    }
+    body{margin:0;background:var(--bg);font-family:Arial, sans-serif;color:#fff;text-align:center}
+    header{position:relative;padding:18px 16px 0}
+    .logo{position:absolute;left:14px;top:14px;width:44px;height:44px;object-fit:contain}
+    h2{margin:18px 0 16px;font-size:26px}
+    .card{
+      background:var(--card);color:var(--text);
+      width:92%;max-width:520px;margin:18px auto;padding:16px;border-radius:12px;
+      box-sizing:border-box
+    }
+    input, select{
+      width:100%;padding:12px;margin:10px 0;font-size:16px;box-sizing:border-box;
+      border-radius:10px;border:1px solid #ddd
+    }
+    .btn{
+      width:100%;padding:14px;margin-top:8px;font-size:18px;border:none;border-radius:12px;
+      background:var(--yellow);cursor:pointer;color:#000
+    }
+    .sub{margin-top:10px;font-size:13px;color:var(--muted)}
+    .err{margin-top:10px;color:#b00020;font-size:14px;display:none}
   </style>
 </head>
 <body>
+  <header>
+    <img class="logo" src="" alt="">
+    <h2>إنشاء لعبة</h2>
+  </header>
 
-<h2>إنشاء لعبة</h2>
+  <div class="card">
+    <input id="gameName" placeholder="اسم اللعبة" />
+    <select id="playersMax">
+      <option value="1">1</option><option value="2">2</option><option value="3">3</option><option value="4">4</option>
+      <option value="5">5</option><option value="6">6</option><option value="7">7</option><option value="8">8</option>
+      <option value="9">9</option><option value="10">10</option>
+    </select>
+    <button id="btnCreate" class="btn">إنشاء</button>
+    <div class="sub">بعد الإنشاء سيظهر رمز مكوّن من 6 أرقام لمشاركته مع اللاعبين</div>
+    <div id="err" class="err"></div>
+  </div>
 
-<div class="box">
-  <input id="name" placeholder="اسم اللعبة">
-  <input id="players" type="number" inputmode="numeric" placeholder="عدد اللاعبين (أرقام إنجليزية فقط)">
-  <button id="btn">إنشاء</button>
-  <div class="note">مثال: 4 أو 6</div>
-  <div id="msg" class="err"></div>
-</div>
+  <script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.5/firebase-app.js";
+    import { getDatabase, ref, get, set } from "https://www.gstatic.com/firebasejs/10.12.5/firebase-database.js";
 
-<script>
-  // ✅ هذا هو databaseURL حقك (من الصورة)
-  const DB_URL = "https://sabaq-alhorof-default-rtdb.europe-west1.firebasedatabase.app";
-
-  function timeoutFetch(url, options={}, ms=10000){
-    return Promise.race([
-      fetch(url, options),
-      new Promise((_, rej)=>setTimeout(()=>rej(new Error("انتهت المهلة (Timeout)")), ms))
-    ]);
-  }
-
-  document.getElementById("btn").addEventListener("click", async () => {
-    const msg = document.getElementById("msg");
-    msg.textContent = "";
-
-    const name = document.getElementById("name").value.trim();
-    const players = Number(document.getElementById("players").value);
-
-    if(!name || !Number.isFinite(players) || players <= 0){
-      msg.textContent = "أدخل اسم اللعبة وعدد لاعبين صحيح.";
-      return;
-    }
-
-    // ID بسيط ومضمون
-    const gameId = String(Date.now());
-
-    const payload = {
-      name,
-      players,
-      createdAt: Date.now()
+    const firebaseConfig = {
+      apiKey: "AIzaSyDy2FEg8Xj0pA05syDawTh37rI1NEbQTjQ",
+      authDomain: "sabaq-alhorof.firebaseapp.com",
+      databaseURL: "https://sabaq-alhorof-default-rtdb.europe-west1.firebasedatabase.app",
+      projectId: "sabaq-alhorof",
+      storageBucket: "sabaq-alhorof.firebasestorage.app",
+      messagingSenderId: "1053646928152",
+      appId: "1:1053646928152:web:032d50148c3a4f1148066d"
     };
 
-    try{
-      const res = await timeoutFetch(${DB_URL}/games/${encodeURIComponent(gameId)}.json, {
-        method: "PUT",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(payload)
-      });
+    const app = initializeApp(firebaseConfig);
+    const db = getDatabase(app);
 
-      if(!res.ok){
-        const t = await res.text();
-        throw new Error(فشل الحفظ: ${res.status}\n${t});
-      }
-
-      location.href = game.html?id=${encodeURIComponent(gameId)};
-    }catch(e){
-      msg.textContent = "حصل خطأ أثناء إنشاء اللعبة:\n" + (e?.message || e);
+    const errBox = document.getElementById("err");
+    function showErr(msg){
+      errBox.style.display="block";
+      errBox.textContent = msg;
     }
-  });
-</script>
 
+    function randKey(){
+      return (Math.random().toString(36).slice(2) + Date.now().toString(36));
+    }
+
+    async function generateUniqueCode(){
+      for(let i=0;i<30;i++){
+        const code = String(Math.floor(Math.random()*1000000)).padStart(6,"0");
+        const snap = await get(ref(db, `rooms/${code}`));
+        if(!snap.exists()) return code;
+      }
+      throw new Error("تعذر إنشاء رمز جديد. أعد المحاولة.");
+    }
+
+    document.getElementById("btnCreate").addEventListener("click", async () => {
+      errBox.style.display="none";
+      const name = document.getElementById("gameName").value.trim();
+      const playersMax = Number(document.getElementById("playersMax").value);
+
+      if(!name) return showErr("اكتب اسم اللعبة");
+      if(!Number.isFinite(playersMax) || playersMax < 1 || playersMax > 10) return showErr("عدد اللاعبين غير صحيح");
+
+      try{
+        const code = await generateUniqueCode();
+        const hostKey = randKey();
+
+        const room = {
+          code,
+          name,
+          playersMax,
+          status: "lobby",
+          createdAt: Date.now(),
+          activeMap: 0,
+          freeze: false,
+          buzzer: null,
+          current: { letter: null, qIndex: 0, row: null, col: null, map: 0 },
+          presenterKey: hostKey,
+          players: {}
+        };
+
+        await set(ref(db, `rooms/${code}`), room);
+
+        location.href = `game.html?role=host&code=${encodeURIComponent(code)}&key=${encodeURIComponent(hostKey)}`;
+      }catch(e){
+        showErr(e?.message || "صار خطأ غير متوقع");
+      }
+    });
+  </script>
 </body>
 </html>
