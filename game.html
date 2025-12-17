@@ -28,7 +28,14 @@
 
     body{margin:0;background:var(--bg);font-family:Arial, sans-serif;color:#fff;text-align:center}
     header{position:relative;padding:14px 14px 0}
-    .logo{position:absolute;left:14px;top:14px;width:44px;height:44px;object-fit:contain}
+
+    /* ✅ اللوجو (كبير + نفس مكانه بكل الصفحات) */
+    .logo{
+      position:absolute;left:14px;top:14px;
+      width:86px;height:86px;object-fit:contain;
+      pointer-events:none;
+    }
+
     .gameName{position:absolute;right:14px;top:20px;font-size:14px;opacity:.95}
     h1{margin:18px 0 10px;color:var(--yellow);font-size:28px}
     .wrap{width:95%;max-width:900px;margin:0 auto}
@@ -148,7 +155,7 @@
 </head>
 <body>
   <header>
-    <img class="logo" src="" alt="">
+    <img class="logo" src="logo.png" alt="شعار صندوق المسابقات">
     <div id="gameName" class="gameName"></div>
     <h1>سباق الحروف</h1>
   </header>
@@ -297,7 +304,6 @@
     function setStateClass(el, st){
       el.classList.remove("state0","state1","state2","state3","pulse");
       el.classList.add(`state${st}`);
-      // ✅ الحركة فقط للأصفر (state1)
       if(st === 1) el.classList.add("pulse");
     }
 
@@ -448,7 +454,6 @@
 
       mapImg.src = src;
 
-      // بناء 25 سداسي
       overlay.innerHTML = "";
       overlay.setAttribute("xmlns", "http://www.w3.org/2000/svg");
 
@@ -509,7 +514,6 @@
 
       window.addEventListener("resize", placeHexes);
 
-      // حالات التلوين
       const mapStates = (room.mapStates && room.mapStates[String(activeMap)]) ? room.mapStates[String(activeMap)] : {};
       overlay.querySelectorAll(".cell").forEach(cell => {
         const r = Number(cell.getAttribute("data-row"));
@@ -519,7 +523,6 @@
         setStateClass(cell, st);
       });
 
-      // اسم أول ضاغط
       const buzzBox = document.getElementById("buzzBox");
       const buzzer = room.buzzer;
 
@@ -533,7 +536,6 @@
         buzzBox.textContent = "—";
       }
 
-      // سؤال المقدم
       if(isHost){
         const qText = document.getElementById("qText");
         const cur = room.current || {};
@@ -546,12 +548,10 @@
         }
       }
 
-      // زوم
       zoom.addEventListener("input", () => {
         mapScale.style.setProperty("--zoom", zoom.value);
       });
 
-      // تغيير الخريطة
       const mapBtn = document.getElementById("mapBtn");
       if(mapBtn){
         mapBtn.addEventListener("click", async () => {
@@ -564,7 +564,6 @@
         });
       }
 
-      // تجميد اللاعبين + يمسح اسم الضاغط
       const freezeBtn = document.getElementById("freezeBtn");
       if(freezeBtn){
         freezeBtn.addEventListener("click", async () => {
@@ -572,7 +571,6 @@
         });
       }
 
-      // تغيير السؤال
       const nextQ = document.getElementById("nextQ");
       if(nextQ){
         nextQ.addEventListener("click", async () => {
@@ -585,7 +583,6 @@
         });
       }
 
-      // كليك المقدم على السداسي: يلوّن + يحدد حرف + يمسح البازر
       if(isHost){
         overlay.querySelectorAll(".cell").forEach(cell => {
           cell.addEventListener("click", async (e) => {
@@ -611,7 +608,6 @@
         });
       }
 
-      // زر اللاعب الكبير
       const buzzBtn = document.getElementById("buzzBtn");
       if(buzzBtn){
         const disabled = (!started) || room.freeze || !me || !me.name;
@@ -633,7 +629,6 @@
       }
     }
 
-    // مراقبة الغرفة
     onValue(roomRef, (snap) => {
       if(!snap.exists()){
         main.textContent = "اللعبة غير موجودة (رمز غير صحيح).";
