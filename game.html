@@ -15,7 +15,6 @@
       --orange:#f28c00;
       --red:#c01818;
       --pale:#f3e7a6;
-      --zoom:1;
     }
     body{margin:0;background:var(--bg);font-family:Arial, sans-serif;color:#fff;text-align:center}
     header{position:relative;padding:14px 14px 0}
@@ -31,10 +30,13 @@
     }
 
     .row{display:flex;gap:10px;flex-wrap:wrap;justify-content:center;align-items:center}
-    .btn{padding:12px 14px;font-size:16px;border:none;border-radius:10px;cursor:pointer}
+    .btn{
+      padding:12px 14px;font-size:16px;border:none;border-radius:10px;cursor:pointer
+    }
     .btnYellow{background:var(--yellow);color:#000}
     .btnGreen{background:var(--green);color:#fff}
     .btnRed{background:var(--red);color:#fff}
+    .btnOrange{background:var(--orange);color:#fff}
 
     .codeBox{font-size:18px}
     .codeNum{font-size:28px;font-weight:bold;letter-spacing:2px}
@@ -44,62 +46,54 @@
     .teamGreen{background:rgba(26,163,74,.9)}
     .teamOrange{background:rgba(242,140,0,.9)}
     .teamTitle{font-weight:bold;margin-bottom:8px}
-    .playerItem{background:rgba(255,255,255,.18);padding:8px;border-radius:10px;margin:6px 0;cursor:pointer}
+    .playerItem{
+      background:rgba(255,255,255,.18);
+      padding:8px;border-radius:10px;margin:6px 0;cursor:pointer
+    }
 
     /* MAP */
     .mapOuter{width:100%;display:flex;justify-content:center}
     .mapScale{
       width:min(92vw, 760px);
-      transform:scale(var(--zoom));
+      transform:scale(var(--zoom, 1));
       transform-origin:center top;
     }
     .mapBox{
       position:relative;
       width:100%;
-      aspect-ratio: 1536 / 865;
+      aspect-ratio: 1536 / 873;
       border-radius:12px;
       overflow:hidden;
       background:#0000;
     }
     .mapBox img{width:100%;height:100%;object-fit:cover;display:block}
 
-    /* مهم: نخلي الـ overlay ما يستقبل ضغط، والضغط يكون على الأزرار فقط */
-    .overlay{position:absolute;inset:0;pointer-events:none}
-
-    .hexBtn{
-      position:absolute;
-      border:none;
-      background:transparent;
-      cursor:pointer;
-
-      /* هذا هو السداسي الصحيح للخرائط (Flat-top) */
-      clip-path: polygon(
-        25% 0%,
-        75% 0%,
-        100% 50%,
-        75% 100%,
-        25% 100%,
-        0% 50%
-      );
-
-      display:block;
-      pointer-events:auto; /* الزر نفسه يستقبل الضغط */
-      user-select:none;
-      -webkit-tap-highlight-color: transparent;
+    .overlay{
+      position:absolute;inset:0;
+      pointer-events:none; /* نفعلها للمقدم من JS */
     }
 
-    .hexState0{background:transparent}
-    .hexState1{background:rgba(243,231,166,.75)}
-    .hexState2{background:rgba(26,163,74,.55)}
-    .hexState3{background:rgba(242,140,0,.55)}
+    /* SVG hexes */
+    #hexSvg{width:100%;height:100%;display:block}
+    .hexPoly{cursor:pointer}
+    .hexState0{fill:rgba(0,0,0,0)}
+    .hexState1{fill:rgba(243,231,166,.75)}
+    .hexState2{fill:rgba(26,163,74,.55)}
+    .hexState3{fill:rgba(242,140,0,.55)}
 
-    .below{display:flex;gap:10px;flex-wrap:wrap;justify-content:center;align-items:stretch}
+    .below{
+      display:flex;gap:10px;flex-wrap:wrap;justify-content:center;align-items:stretch
+    }
     .buzzBox{
-      min-width:260px;flex:1;border-radius:12px;padding:12px;color:#fff;
+      min-width:260px;flex:1;
+      border-radius:12px;padding:12px;color:#fff;
       display:flex;align-items:center;justify-content:center;font-size:18px
     }
     .buzzEmpty{background:rgba(0,0,0,.25)}
-    .questionBox{min-width:260px;flex:2;border-radius:12px;padding:12px;background:#fff;color:#111;text-align:right}
+    .questionBox{
+      min-width:260px;flex:2;
+      border-radius:12px;padding:12px;background:#fff;color:#111;text-align:right
+    }
     .qTitle{font-weight:bold;margin-bottom:8px}
     .qText{line-height:1.6}
     .smallNote{font-size:12px;opacity:.85;margin-top:8px}
@@ -116,9 +110,9 @@
 
     .footerBtn{
       width:100%;max-width:520px;margin:10px auto 18px;
-      padding:14px;border:none;border-radius:12px;background:var(--yellow);
-      cursor:pointer;color:#000;font-size:18px
+      padding:14px;border:none;border-radius:12px;background:var(--yellow);cursor:pointer;color:#000;font-size:18px
     }
+    a{color:inherit}
   </style>
 </head>
 <body>
@@ -147,6 +141,8 @@
       appId: "1:1053646928152:web:032d50148c3a4f1148066d"
     };
 
+    const MAP_FILES = ["maps/map1.jpeg","maps/map2.jpeg","maps/map3.jpeg"];
+
     const MAPS = [
       [
         ["ذ","ج","أ","ب","ر"],
@@ -171,7 +167,7 @@
       ]
     ];
 
-    // أسئلة مؤقتة (نستبدلها بملف الأسئلة لاحقاً)
+    // أسئلة مؤقتة (بدّلها لاحقًا لما ترسل الـ PDF)
     const QUESTIONS = {};
     const ALL_LETTERS = Array.from(new Set(MAPS.flat(2)));
     for(const L of ALL_LETTERS){
@@ -181,6 +177,16 @@
         `سؤال 3 بحرف ${L}`
       ];
     }
+
+    // هذه إطارات السداسيات مطابقة للصورة (نِسَب)
+    // [x,y,w,h] لكل خلية (25) بترتيب 5x5
+    const HEX_FRAMES = [
+      [[0.126953,0.049255,0.136068,0.219931],[0.266276,0.049255,0.136068,0.219931],[0.405599,0.049255,0.136719,0.219931],[0.545573,0.049255,0.136068,0.219931],[0.684896,0.049255,0.136719,0.219931]],
+      [[0.196615,0.218786,0.136068,0.219931],[0.335938,0.221077,0.135417,0.218786],[0.474609,0.219931,0.136068,0.219931],[0.613932,0.219931,0.136719,0.219931],[0.753906,0.219931,0.136068,0.219931]],
+      [[0.127604,0.390607,0.136068,0.218786],[0.266276,0.390607,0.136068,0.218786],[0.405599,0.390607,0.136719,0.219931],[0.545573,0.390607,0.136068,0.219931],[0.684896,0.390607,0.136719,0.219931]],
+      [[0.197266,0.560137,0.135417,0.219931],[0.335938,0.561283,0.136068,0.218786],[0.47526,0.561283,0.136719,0.218786],[0.615234,0.561283,0.136068,0.218786],[0.754557,0.561283,0.136719,0.219931]],
+      [[0.126953,0.731959,0.136719,0.218786],[0.266276,0.733104,0.136068,0.218786],[0.404948,0.731959,0.136719,0.219931],[0.544922,0.731959,0.136719,0.219931],[0.684896,0.731959,0.136068,0.219931]]
+    ];
 
     const app = initializeApp(firebaseConfig);
     const db = getDatabase(app);
@@ -204,40 +210,14 @@
     function teamColor(team){
       return team === "green" ? "rgba(26,163,74,.9)" : "rgba(242,140,0,.9)";
     }
+
     function escapeHtml(s){
       return String(s ?? "").replace(/[&<>"']/g, c => ({
         "&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#039;"
       }[c]));
     }
+
     function cellKey(row,col){ return `${row}-${col}`; }
-
-    /* توزيع Flat-top مطابق لشكل الخرائط */
-    function layoutHexes(container){
-      const W = container.clientWidth;
-      const H = container.clientHeight;
-
-      // هذه القيم مضبوطة لتقارب خرائطك (Flat-top)
-      const w = W * 0.155;                 // عرض السداسي
-      const h = w * 0.865;                 // ارتفاع السداسي (sqrt(3)/2 تقريباً)
-      const stepX = w * 0.75;              // تداخل أفقي
-      const stepY = h;                     // خطوة عمودية كاملة
-
-      const gridW = (4 * stepX) + w;       // 5 أعمدة
-      const gridH = (4 * stepY) + h;       // 5 صفوف (مع إزاحة الأعمدة)
-
-      const marginX = (W - gridW) / 2;
-      const marginY = (H - gridH) / 2;
-
-      const pos = [];
-      for(let row=0; row<5; row++){
-        for(let col=0; col<5; col++){
-          const left = marginX + col * stepX;
-          const top  = marginY + row * stepY + (col % 2) * (h/2); // إزاحة الأعمدة
-          pos.push({row,col,left,top,width:w,height:h});
-        }
-      }
-      return pos;
-    }
 
     function renderHostLobby(room){
       const players = room.players || {};
@@ -267,16 +247,14 @@
         <div style="height:12px"></div>
 
         <button id="startBtn" class="btn btnGreen">ابدأ اللعبة</button>
-        <div class="smallNote">اضغط على اسم لاعب لنقله للفريق الآخر</div>
+        <div class="smallNote">يمكنك الضغط على اسم لاعب لنقله للفريق الآخر</div>
       `;
 
       const greenList = document.getElementById("greenList");
       const orangeList = document.getElementById("orangeList");
 
       function draw(colEl, arr){
-        colEl.innerHTML =
-          arr.map(p => `<div class="playerItem" data-id="${escapeHtml(p.id)}">${escapeHtml(p.name)}</div>`).join("")
-          || `<div class="smallNote">لا يوجد</div>`;
+        colEl.innerHTML = arr.map(p => `<div class="playerItem" data-id="${escapeHtml(p.id)}">${escapeHtml(p.name)}</div>`).join("") || `<div class="smallNote">لا يوجد</div>`;
       }
       draw(greenList, green);
       draw(orangeList, orange);
@@ -306,6 +284,19 @@
       main.innerHTML = `<div class="muted">${escapeHtml(msg)}</div>`;
     }
 
+    function pointsFromFrame(x,y,w,h){
+      // سداسي flat-top داخل إطار (x,y,w,h)
+      const p = [
+        [x + 0.25*w, y],
+        [x + 0.75*w, y],
+        [x + 1.00*w, y + 0.50*h],
+        [x + 0.75*w, y + 1.00*h],
+        [x + 0.25*w, y + 1.00*h],
+        [x + 0.00*w, y + 0.50*h]
+      ];
+      return p.map(pt => pt.join(",")).join(" ");
+    }
+
     function renderGame(room, me){
       gameNameEl.textContent = room?.name ? room.name : "";
 
@@ -326,7 +317,9 @@
           <div id="mapScale" class="mapScale" style="--zoom:1">
             <div id="mapBox" class="mapBox">
               <img id="mapImg" src="" alt="">
-              <div id="overlay" class="overlay"></div>
+              <div id="overlay" class="overlay">
+                <svg id="hexSvg" viewBox="0 0 1 1" preserveAspectRatio="none"></svg>
+              </div>
             </div>
           </div>
         </div>
@@ -335,10 +328,17 @@
 
         <div class="below">
           <div id="buzzBox" class="buzzBox buzzEmpty">—</div>
-          <div class="questionBox">
-            <div class="qTitle">${isHost ? "السؤال" : "الحالة"}</div>
-            <div id="qText" class="qText">${isHost ? "اختر حرفًا من الخريطة" : (started ? "جاهز" : "بانتظار المقدم")}</div>
-          </div>
+          ${isHost ? `
+            <div class="questionBox">
+              <div class="qTitle">السؤال</div>
+              <div id="qText" class="qText">اختر حرفًا من الخريطة</div>
+            </div>
+          ` : `
+            <div class="questionBox">
+              <div class="qTitle">الحالة</div>
+              <div class="qText">${started ? "جاهز" : "بانتظار المقدم"}</div>
+            </div>
+          `}
         </div>
 
         ${isHost ? `
@@ -358,59 +358,47 @@
 
       const mapImg = document.getElementById("mapImg");
       const overlay = document.getElementById("overlay");
-      const mapBox = document.getElementById("mapBox");
+      const svg = document.getElementById("hexSvg");
       const mapScale = document.getElementById("mapScale");
       const zoom = document.getElementById("zoom");
 
       const activeMap = Number(room.activeMap || 0);
+      mapImg.src = MAP_FILES[activeMap] || MAP_FILES[0];
+      mapImg.onerror = () => { mapImg.src = MAP_FILES[0]; };
 
-      // مسارات صورك الصحيحة داخل مجلد maps وبامتداد jpeg
-      const MAP_SRC = ["maps/map1.jpeg","maps/map2.jpeg","maps/map3.jpeg"];
-      mapImg.src = MAP_SRC[activeMap] || MAP_SRC[0];
+      // تفعيل الضغط للمقدم فقط
+      overlay.style.pointerEvents = isHost ? "auto" : "none";
 
-      // إنشاء 25 زر (5x5)
-      overlay.innerHTML = "";
-      for(let row=0; row<5; row++){
-        for(let col=0; col<5; col++){
-          const btn = document.createElement("button");
-          btn.className = "hexBtn hexState0";
-          btn.type = "button";
-          btn.setAttribute("data-row", row);
-          btn.setAttribute("data-col", col);
-          overlay.appendChild(btn);
+      // بناء السداسيات SVG
+      svg.innerHTML = "";
+      for(let r=0; r<5; r++){
+        for(let c=0; c<5; c++){
+          const [x,y,w,h] = HEX_FRAMES[r][c];
+          const poly = document.createElementNS("http://www.w3.org/2000/svg", "polygon");
+          poly.setAttribute("points", pointsFromFrame(x,y,w,h));
+          poly.setAttribute("data-row", String(r));
+          poly.setAttribute("data-col", String(c));
+          poly.setAttribute("class", "hexPoly hexState0");
+          poly.style.pointerEvents = isHost ? "all" : "none"; // ضغط داخل السداسي فقط
+          svg.appendChild(poly);
         }
       }
 
-      // تموضع الأزرار فوق الخريطة
-      function placeHexes(){
-        const pos = layoutHexes(mapBox);
-        const buttons = overlay.querySelectorAll(".hexBtn");
-        pos.forEach((p, i) => {
-          const b = buttons[i];
-          b.style.left = `${p.left}px`;
-          b.style.top = `${p.top}px`;
-          b.style.width = `${p.width}px`;
-          b.style.height = `${p.height}px`;
-        });
-      }
-
-      // تطبيق ألوان الحالات من قاعدة البيانات
+      // تطبيق حالات التلوين من قاعدة البيانات
       const mapStates = (room.mapStates && room.mapStates[String(activeMap)]) ? room.mapStates[String(activeMap)] : {};
-      overlay.querySelectorAll(".hexBtn").forEach(btn => {
-        const r = Number(btn.getAttribute("data-row"));
-        const c = Number(btn.getAttribute("data-col"));
+      svg.querySelectorAll(".hexPoly").forEach(poly => {
+        const r = Number(poly.getAttribute("data-row"));
+        const c = Number(poly.getAttribute("data-col"));
         const k = cellKey(r,c);
         const st = Number(mapStates?.[k] ?? 0);
-        btn.classList.remove("hexState0","hexState1","hexState2","hexState3");
-        btn.classList.add(`hexState${st}`);
-
-        // اللاعب لا يتفاعل مع الخريطة
-        if(!isHost) btn.style.pointerEvents = "none";
+        poly.classList.remove("hexState0","hexState1","hexState2","hexState3");
+        poly.classList.add(`hexState${st}`);
       });
 
-      // عرض من ضغط أولاً
+      // عرض من ضغط أولًا
       const buzzBox = document.getElementById("buzzBox");
       const buzzer = room.buzzer;
+
       if(buzzer && buzzer.name){
         buzzBox.classList.remove("buzzEmpty");
         buzzBox.style.background = teamColor(buzzer.team);
@@ -422,8 +410,8 @@
       }
 
       // السؤال للمقدم
-      const qText = document.getElementById("qText");
       if(isHost){
+        const qText = document.getElementById("qText");
         const cur = room.current || {};
         if(cur.letter){
           const list = QUESTIONS[cur.letter] || [];
@@ -439,7 +427,7 @@
         mapScale.style.setProperty("--zoom", zoom.value);
       });
 
-      // تغيير الخريطة (مقدم)
+      // تغيير الخريطة (مقدم فقط)
       const mapBtn = document.getElementById("mapBtn");
       if(mapBtn){
         mapBtn.addEventListener("click", async () => {
@@ -452,7 +440,7 @@
         });
       }
 
-      // تجميد زر اللاعبين (مقدم)
+      // تجميد زر اللاعبين (مقدم فقط) + يمسح اسم الضاغط
       const freezeBtn = document.getElementById("freezeBtn");
       if(freezeBtn){
         freezeBtn.addEventListener("click", async () => {
@@ -463,7 +451,7 @@
         });
       }
 
-      // تغيير السؤال (مقدم)
+      // تغيير السؤال (مقدم فقط)
       const nextQ = document.getElementById("nextQ");
       if(nextQ){
         nextQ.addEventListener("click", async () => {
@@ -476,14 +464,14 @@
         });
       }
 
-      // ضغط خلية (مقدم): يغيّر اللون + يحدد الحرف + يمسح البازر
+      // ضغط سداسي (مقدم فقط): يلوّن + يحدد حرف + يمسح البازر
       if(isHost){
-        overlay.querySelectorAll(".hexBtn").forEach(btn => {
-          btn.addEventListener("click", async () => {
+        svg.querySelectorAll(".hexPoly").forEach(poly => {
+          poly.addEventListener("click", async () => {
             if(room.status !== "started") return;
 
-            const r = Number(btn.getAttribute("data-row"));
-            const c = Number(btn.getAttribute("data-col"));
+            const r = Number(poly.getAttribute("data-row"));
+            const c = Number(poly.getAttribute("data-col"));
             const k = cellKey(r,c);
 
             const st = Number(mapStates?.[k] ?? 0);
@@ -501,7 +489,7 @@
         });
       }
 
-      // زر اللاعب (لاعب)
+      // زر اللاعب الكبير (لاعب فقط)
       const buzzBtn = document.getElementById("buzzBtn");
       if(buzzBtn){
         const disabled = (!started) || room.freeze || !me || !me.name;
@@ -521,14 +509,6 @@
           });
         });
       }
-
-      // بعد تحميل الصورة نثبت أماكن الأزرار
-      if(mapImg.complete){
-        placeHexes();
-      }else{
-        mapImg.addEventListener("load", placeHexes, { once:true });
-      }
-      window.addEventListener("resize", placeHexes);
     }
 
     onValue(roomRef, (snap) => {
@@ -552,6 +532,7 @@
         return;
       }
 
+      // لاعب
       const players = room.players || {};
       const me = pid ? players[pid] : null;
 
