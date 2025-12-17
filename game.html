@@ -202,7 +202,7 @@
 
     // كل عنصر: { q: نص السؤال, a: الإجابة }
     function createEmptyQuestionsForLetter(letter, count = 25){
-      return Array.from({ length: count }, (_, i) => ({
+      return Array.from({ length: count }, () => ({
         q: "",   // سيتم تعبئته لاحقًا
         a: ""    // سيتم تعبئته لاحقًا
       }));
@@ -210,6 +210,43 @@
 
     for(const L of ALL_LETTERS){
       QUESTIONS[L] = createEmptyQuestionsForLetter(L, 25);
+    }
+
+    // ✅ عشوائية "ثابتة" لكل حرف داخل الغرفة: ترتيب الأسئلة يكون shuffled لكن ثابت مع نفس seed
+    function fnv1a32(str){
+      let h = 0x811c9dc5;
+      for(let i=0;i<str.length;i++){
+        h ^= str.charCodeAt(i);
+        h = Math.imul(h, 0x01000193);
+      }
+      return h >>> 0;
+    }
+
+    function mulberry32(seed){
+      let a = seed >>> 0;
+      return function(){
+        a |= 0; a = (a + 0x6D2B79F5) | 0;
+        let t = Math.imul(a ^ (a >>> 15), 1 | a);
+        t = (t + Math.imul(t ^ (t >>> 7), 61 | t)) ^ t;
+        return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
+      };
+    }
+
+    function shuffledOrder(total, seed){
+      const arr = Array.from({length: total}, (_, i) => i);
+      const rnd = mulberry32(seed);
+      for(let i = arr.length - 1; i > 0; i--){
+        const j = Math.floor(rnd() * (i + 1));
+        [arr[i], arr[j]] = [arr[j], arr[i]];
+      }
+      return arr;
+    }
+
+    function getLetterOrder(room, letter, mapIndex, total = 25){
+      const base = Number(room?.qSeed || 1);
+      const mix = fnv1a32(`${letter}:${mapIndex}`);
+      const seed = (base ^ mix) >>> 0;
+      return shuffledOrder(total, seed);
     }
 
     const app = initializeApp(firebaseConfig);
@@ -375,6 +412,8 @@
           activeMap: 0,
           freeze: false,
           buzzer: null,
+          // ✅ seed ثابت لترتيب الأسئلة العشوائي داخل الغرفة
+          qSeed: Date.now(),
           current: { letter: null, qIndex: 0, row: null, col: null, map: 0 }
         });
       });
@@ -545,19 +584,24 @@
         buzzBox.textContent = "—";
       }
 
-      // سؤال المقدم
+      // سؤال المقدم (مع ترتيب عشوائي ثابت)
       if(isHost){
         const qText = document.getElementById("qText");
         const cur = room.current || {};
         if(cur.letter){
           const list = QUESTIONS[cur.letter] || [];
-          const total = list.length || 25;
-          const idx = Number(cur.qIndex || 0) % total;
+          const total = 25; // ثابت
+          const stepIdx = (Number(cur.qIndex || 0) % total + total) % total;
 
-          const item = list[idx] || {};
+          const order = getLetterOrder(room, cur.letter, activeMap, total);
+          const realIndex = order[stepIdx] ?? stepIdx;
+
+          const item = list[realIndex] || {};
           const q = String(item.q || "").trim();
 
-          qText.textContent = q ? q : `سؤال (${idx+1}/${total}) لحرف ${cur.letter} غير مُدخل بعد`;
+          qText.textContent = q
+            ? q
+            : `سؤال (${stepIdx+1}/${total}) لحرف ${cur.letter} غير مُدخل بعد`;
         }else{
           qText.textContent = "اختر حرفًا من الخريطة";
         }
@@ -589,16 +633,14 @@
         });
       }
 
-      // تغيير السؤال
+      // تغيير السؤال (يمشي للأمام + يرجع للبداية بعد 25)
       const nextQ = document.getElementById("nextQ");
       if(nextQ){
         nextQ.addEventListener("click", async () => {
           const cur = room.current || {};
           if(!cur.letter) return;
 
-          const list = QUESTIONS[cur.letter] || [];
-          const total = list.length || 25;
-
+          const total = 25; // ثابت
           const nextIndex = (Number(cur.qIndex || 0) + 1) % total;
           await update(roomRef, { current: { ...cur, qIndex: nextIndex } });
         });
@@ -610,6 +652,11 @@
           cell.addEventListener("click", async (e) => {
             e.preventDefault();
             if(room.status !== "started") return;
+
+            // ✅ لو الغرفة قديمة وما فيها qSeed: نضيفه مرة واحدة
+            if(!room.qSeed){
+              await update(roomRef, { qSeed: Date.now() });
+            }
 
             const r = Number(cell.getAttribute("data-row"));
             const c = Number(cell.getAttribute("data-col"));
