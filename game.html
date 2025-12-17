@@ -249,6 +249,22 @@
       return shuffledOrder(total, seed);
     }
 
+    // ✅ تجهيز تطبيع نص عربي (لاستخدامه لاحقاً للتحقق من أول حرف)
+    function normalizeArabic(str){
+      return String(str ?? "")
+        .replace(/[\u064B-\u065F\u0670\u0640]/g, "") // حركات + تطويل
+        .replace(/[إأآٱ]/g, "ا")
+        .replace(/ى/g, "ي")
+        .replace(/ة/g, "ه")
+        .replace(/\s+/g, " ")
+        .trim();
+    }
+    function firstArabicLetter(str){
+      const s = normalizeArabic(str);
+      const m = s.match(/[اأإآٱبپتثجحخدذرزسشصضطظعغفقكلمناهوي]/);
+      return m ? m[0] : "";
+    }
+
     const app = initializeApp(firebaseConfig);
     const db = getDatabase(app);
 
@@ -414,7 +430,7 @@
           buzzer: null,
           // ✅ seed ثابت لترتيب الأسئلة العشوائي داخل الغرفة
           qSeed: Date.now(),
-          current: { letter: null, qIndex: 0, row: null, col: null, map: 0 }
+          current: { letter: null, qIndex: 0, row: null, col: null, map: 0, showA: false }
         });
       });
     }
@@ -465,8 +481,15 @@
 
           ${isHost ? `
             <div class="questionBox">
-              <div class="qTitle">السؤال</div>
-              <div id="qText" class="qText">اختر حرفًا من الخريطة</div>
+              <div class="row" style="justify-content:space-between;align-items:center">
+                <div class="qTitle" style="margin:0">السؤال</div>
+                <button id="toggleA" class="btn btnYellow" style="padding:8px 10px;font-size:14px">إظهار الإجابة</button>
+              </div>
+              <div id="qText" class="qText" style="margin-top:8px">اختر حرفًا من الخريطة</div>
+
+              <div style="height:10px"></div>
+              <div class="qTitle">الإجابة</div>
+              <div id="aText" class="qText">—</div>
             </div>
           ` : `
             <div class="questionBox">
@@ -584,10 +607,15 @@
         buzzBox.textContent = "—";
       }
 
-      // سؤال المقدم (مع ترتيب عشوائي ثابت)
+      // سؤال/إجابة المقدم (مع ترتيب عشوائي ثابت)
       if(isHost){
         const qText = document.getElementById("qText");
+        const aText = document.getElementById("aText");
+        const toggleA = document.getElementById("toggleA");
+
         const cur = room.current || {};
+        const showA = !!cur.showA;
+
         if(cur.letter){
           const list = QUESTIONS[cur.letter] || [];
           const total = 25; // ثابت
@@ -598,12 +626,32 @@
 
           const item = list[realIndex] || {};
           const q = String(item.q || "").trim();
+          const a = String(item.a || "").trim();
 
           qText.textContent = q
             ? q
             : `سؤال (${stepIdx+1}/${total}) لحرف ${cur.letter} غير مُدخل بعد`;
+
+          if(showA){
+            aText.textContent = a ? a : `إجابة هذا السؤال غير مُدخلة بعد`;
+            toggleA.textContent = "إخفاء الإجابة";
+          }else{
+            aText.textContent = "مخفية";
+            toggleA.textContent = "إظهار الإجابة";
+          }
         }else{
           qText.textContent = "اختر حرفًا من الخريطة";
+          aText.textContent = "—";
+          toggleA.textContent = "إظهار الإجابة";
+        }
+
+        // زر إظهار/إخفاء الإجابة (للمقدم فقط)
+        if(toggleA){
+          toggleA.addEventListener("click", async () => {
+            const cur2 = room.current || {};
+            if(!cur2.letter) return;
+            await update(roomRef, { current: { ...cur2, showA: !cur2.showA } });
+          });
         }
       }
 
@@ -612,7 +660,7 @@
         mapScale.style.setProperty("--zoom", zoom.value);
       });
 
-      // تغيير الخريطة
+      // تغيير الخريطة (ويخفي الإجابة)
       const mapBtn = document.getElementById("mapBtn");
       if(mapBtn){
         mapBtn.addEventListener("click", async () => {
@@ -620,7 +668,7 @@
           await update(roomRef, {
             activeMap: next,
             buzzer: null,
-            current: { letter: null, qIndex: 0, row: null, col: null, map: next }
+            current: { letter: null, qIndex: 0, row: null, col: null, map: next, showA: false }
           });
         });
       }
@@ -633,7 +681,7 @@
         });
       }
 
-      // تغيير السؤال (يمشي للأمام + يرجع للبداية بعد 25)
+      // تغيير السؤال (يمشي للأمام + يرجع للبداية بعد 25) + يخفي الإجابة
       const nextQ = document.getElementById("nextQ");
       if(nextQ){
         nextQ.addEventListener("click", async () => {
@@ -642,11 +690,11 @@
 
           const total = 25; // ثابت
           const nextIndex = (Number(cur.qIndex || 0) + 1) % total;
-          await update(roomRef, { current: { ...cur, qIndex: nextIndex } });
+          await update(roomRef, { current: { ...cur, qIndex: nextIndex, showA: false } });
         });
       }
 
-      // كليك المقدم على السداسي: يلوّن + يحدد حرف + يمسح البازر
+      // كليك المقدم على السداسي: يلوّن + يحدد حرف + يمسح البازر + يخفي الإجابة
       if(isHost){
         overlay.querySelectorAll(".cell").forEach(cell => {
           cell.addEventListener("click", async (e) => {
@@ -670,7 +718,7 @@
             const updates = {};
             updates[`rooms/${code}/mapStates/${activeMap}/${k}`] = next;
             updates[`rooms/${code}/buzzer`] = null;
-            updates[`rooms/${code}/current`] = { letter, qIndex: 0, row: r, col: c, map: activeMap };
+            updates[`rooms/${code}/current`] = { letter, qIndex: 0, row: r, col: c, map: activeMap, showA: false };
 
             await update(ref(db), updates);
           });
