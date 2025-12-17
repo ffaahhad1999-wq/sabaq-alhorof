@@ -5,6 +5,8 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <title>سباق الحروف</title>
   <style>
+    @import url('https://fonts.googleapis.com/css2?family=Cairo:wght@600;700&display=swap');
+
     :root{
       --bg:#1f4fa3;
       --yellow:#f4c400;
@@ -28,17 +30,26 @@
 
     body{margin:0;background:var(--bg);font-family:Arial, sans-serif;color:#fff;text-align:center}
     header{position:relative;padding:14px 14px 0}
+
     .logo{position:absolute;left:14px;top:14px;width:44px;height:44px;object-fit:contain}
+    /* ✅ تكبير اللوجو في صفحة اللعبة فقط (5x) */
+    body.inGame .logo{width:220px;height:220px}
+
     .gameName{position:absolute;right:14px;top:20px;font-size:14px;opacity:.95}
-    h1{margin:18px 0 10px;color:var(--yellow);font-size:28px}
+
+    h1{
+      margin:18px 0 10px;
+      color:var(--yellow);
+      font-size:28px;
+      font-family:"Cairo", Arial, sans-serif; /* ✅ خط جميل */
+      font-weight:700;
+    }
+
     .wrap{width:95%;max-width:900px;margin:0 auto}
 
     .card{
       background:var(--card);color:var(--text);
-      width:100%;
-      margin:12px auto;
-      padding:16px; /* ✅ تكبير المربع الأبيض الكبير */
-      border-radius:12px;
+      width:100%;margin:12px auto;padding:12px;border-radius:12px;
       box-sizing:border-box
     }
 
@@ -99,10 +110,10 @@
     }
 
     /* ✅ الحالات (المطلوبة) */
-    .overlaySvg .state0{ fill: rgba(0,0,0,0.001); }
-    .overlaySvg .state1{ fill: var(--hexPale); }
-    .overlaySvg .state2{ fill: var(--hexGreen); }
-    .overlaySvg .state3{ fill: var(--hexOrange); }
+    .overlaySvg .state0{ fill: rgba(0,0,0,0.001); }        /* قابل للنقر بدون ما يبان */
+    .overlaySvg .state1{ fill: var(--hexPale); }           /* أصفر باهت */
+    .overlaySvg .state2{ fill: var(--hexGreen); }          /* أخضر */
+    .overlaySvg .state3{ fill: var(--hexOrange); }         /* برتقالي */
 
     /* ✅ حركة تكرارية فقط للأصفر الباهت */
     @keyframes palePulse {
@@ -126,7 +137,7 @@
       border-radius:12px;padding:12px;background:#fff;color:#111;text-align:right
     }
     .qTitle{font-weight:bold;margin-bottom:8px}
-    .qText{line-height:1.6}
+    .qText{line-height: see?; line-height:1.6}
     .smallNote{font-size:12px;opacity:.85;margin-top:8px}
 
     .buzzRow{display:flex;gap:10px;flex-wrap:wrap;align-items:stretch;justify-content:center}
@@ -151,10 +162,9 @@
 </head>
 <body>
   <header>
-    <!-- ✅ اللوجو: افتراضي logo.png + سيتم عمل fallback بالـ JS -->
-    <img id="logoEl" class="logo" src="logo.png" alt="logo">
+    <img class="logo" src="" alt="">
     <div id="gameName" class="gameName"></div>
-    <h1>سباق الحروف</h1>
+    <h1>لعبة سباق الحروف</h1>
   </header>
 
   <div class="wrap">
@@ -200,80 +210,16 @@
       ]
     ];
 
-    /* =========================================================
-       ✅✅✅ جزء الأسئلة فقط (مكان إدخال المحتوى)
-    ========================================================= */
-    const QUESTIONS_CONTENT = {
-      // "أ": [
-      //   { q: "سؤال ...", a: "إجابة ..." }
-      // ]
-    };
-
-    function cleanArabicText(s){
-      return String(s ?? "")
-        .replace(/[\u064B-\u065F\u0670\u06D6-\u06ED]/g, "")
-        .replace(/\u0640/g, "")
-        .replace(/[^\S\r\n]+/g, " ")
-        .trim();
-    }
-
+    // أسئلة مؤقتة (إلى أن ترسل PDF)
     const QUESTIONS = {};
     const ALL_LETTERS = Array.from(new Set(MAPS.flat(2)));
-
-    function createEmptyQuestionsForLetter(count = 25){
-      return Array.from({ length: count }, () => ({ q: "", a: "" }));
-    }
-
-    function buildQuestionsForLetter(letter, count = 25){
-      const base = createEmptyQuestionsForLetter(count);
-      const src = Array.isArray(QUESTIONS_CONTENT?.[letter]) ? QUESTIONS_CONTENT[letter] : [];
-      for(let i=0; i<Math.min(count, src.length); i++){
-        const item = src[i] || {};
-        base[i] = { q: cleanArabicText(item.q), a: cleanArabicText(item.a) };
-      }
-      return base;
-    }
-
     for(const L of ALL_LETTERS){
-      QUESTIONS[L] = buildQuestionsForLetter(L, 25);
+      QUESTIONS[L] = [
+        `سؤال 1 بحرف ${L}`,
+        `سؤال 2 بحرف ${L}`,
+        `سؤال 3 بحرف ${L}`
+      ];
     }
-
-    function fnv1a32(str){
-      let h = 0x811c9dc5;
-      for(let i=0;i<str.length;i++){
-        h ^= str.charCodeAt(i);
-        h = Math.imul(h, 0x01000193);
-      }
-      return h >>> 0;
-    }
-
-    function mulberry32(seed){
-      let a = seed >>> 0;
-      return function(){
-        a |= 0; a = (a + 0x6D2B79F5) | 0;
-        let t = Math.imul(a ^ (a >>> 15), 1 | a);
-        t = (t + Math.imul(t ^ (t >>> 7), 61 | t)) ^ t;
-        return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
-      };
-    }
-
-    function shuffledOrder(total, seed){
-      const arr = Array.from({length: total}, (_, i) => i);
-      const rnd = mulberry32(seed);
-      for(let i = arr.length - 1; i > 0; i--){
-        const j = Math.floor(rnd() * (i + 1));
-        [arr[i], arr[j]] = [arr[j], arr[i]];
-      }
-      return arr;
-    }
-
-    function getLetterOrder(room, letter, mapIndex, total = 25){
-      const base = Number(room?.qSeed || 1);
-      const mix = fnv1a32(`${letter}:${mapIndex}`);
-      const seed = (base ^ mix) >>> 0;
-      return shuffledOrder(total, seed);
-    }
-    /* ========================================================= */
 
     const app = initializeApp(firebaseConfig);
     const db = getDatabase(app);
@@ -286,7 +232,6 @@
 
     const main = document.getElementById("main");
     const gameNameEl = document.getElementById("gameName");
-    const logoEl = document.getElementById("logoEl");
 
     if(!role || !code){
       main.textContent = "بيانات الدخول غير مكتملة.";
@@ -366,6 +311,7 @@
     function setStateClass(el, st){
       el.classList.remove("state0","state1","state2","state3","pulse");
       el.classList.add(`state${st}`);
+      // ✅ الحركة فقط للأصفر (state1)
       if(st === 1) el.classList.add("pulse");
     }
 
@@ -383,6 +329,8 @@
     }
 
     function renderHostLobby(room){
+      document.body.classList.remove("inGame");
+
       const players = room.players || {};
       const list = Object.entries(players).map(([id,p]) => ({id, ...p}));
 
@@ -438,23 +386,26 @@
           activeMap: 0,
           freeze: false,
           buzzer: null,
-          qSeed: Date.now(),
           current: { letter: null, qIndex: 0, row: null, col: null, map: 0 }
         });
       });
     }
 
     function renderWaiting(msg){
+      document.body.classList.remove("inGame");
       main.innerHTML = `<div class="muted">${escapeHtml(msg)}</div>`;
     }
 
     function renderGame(room, me){
+      document.body.classList.add("inGame");
+
       gameNameEl.textContent = room?.name ? room.name : "";
 
       const isHost = role === "host";
       const started = room.status === "started";
 
       main.innerHTML = `
+        <!-- ✅ هذا كان فوق الخريطة: صرنا نخلي هنا فقط الرمز -->
         <div class="row" style="justify-content:space-between">
           <div style="font-size:14px;opacity:.9">رمز: <b>${escapeHtml(room.code)}</b></div>
           <div></div>
@@ -469,9 +420,8 @@
           </div>
         </div>
 
-        <!-- ✅ Spacer ديناميكي يمنع تغطية الأزرار عند التكبير -->
-        <div id="mapSpacer" style="height:14px"></div>
-
+        <!-- ✅ (1) نقلنا أزرار فوق الخريطة لتصبح تحت الخريطة مباشرة -->
+        <div style="height:10px"></div>
         <div class="row" style="justify-content:space-between">
           <div class="row">
             ${isHost ? `<button id="mapBtn" class="btn btnYellow">تغيير الخريطة</button>` : ""}
@@ -480,8 +430,8 @@
           </div>
         </div>
 
-        <div style="height:12px"></div>
-
+        <!-- ✅ (2) الأزرار/العناصر التي كانت تحت الخريطة صارت تحت الأزرار المنقولة -->
+        <div style="height:10px"></div>
         <div class="below">
           <div class="buzzRow" style="flex:1;min-width:260px">
             <div id="buzzBox" class="buzzBox buzzEmpty">—</div>
@@ -513,7 +463,11 @@
       const overlay = document.getElementById("overlay");
       const mapScale = document.getElementById("mapScale");
       const zoom = document.getElementById("zoom");
-      const mapSpacer = document.getElementById("mapSpacer");
+
+      // ✅ حفظ/استرجاع الزوم الذي اختاره المقدم حتى مع إعادة الرسم بعد النقر
+      const savedZoom = Number(room.zoom ?? 1);
+      zoom.value = String(savedZoom);
+      mapScale.style.setProperty("--zoom", savedZoom);
 
       const activeMap = Number(room.activeMap || 0);
 
@@ -541,13 +495,6 @@
       }
 
       overlay.style.pointerEvents = isHost ? "auto" : "none";
-
-      function updateMapSpacer(){
-        const z = Number(zoom?.value || 1);
-        const imgH = mapImg?.clientHeight || 0;
-        const extra = Math.max(0, (z - 1) * imgH);
-        mapSpacer.style.height = `${Math.round(14 + extra)}px`;
-      }
 
       function placeHexes(){
         const W = mapImg.clientWidth;
@@ -585,19 +532,13 @@
 
       function onMapReady(){
         if(!BBOX_CACHE[src]) BBOX_CACHE[src] = detectHexBBox(mapImg);
-        requestAnimationFrame(() => {
-          placeHexes();
-          updateMapSpacer();
-        });
+        requestAnimationFrame(placeHexes);
       }
 
       if(mapImg.complete) onMapReady();
       else mapImg.addEventListener("load", onMapReady, { once:true });
 
-      window.addEventListener("resize", () => {
-        placeHexes();
-        updateMapSpacer();
-      });
+      window.addEventListener("resize", placeHexes);
 
       // حالات التلوين
       const mapStates = (room.mapStates && room.mapStates[String(activeMap)]) ? room.mapStates[String(activeMap)] : {};
@@ -623,32 +564,30 @@
         buzzBox.textContent = "—";
       }
 
-      // ✅ سؤال المقدم (بدون أرقام) — يتبع ترتيب عشوائي ثابت لكل حرف
+      // سؤال المقدم
       if(isHost){
         const qText = document.getElementById("qText");
         const cur = room.current || {};
-        const total = 25;
-
         if(cur.letter){
           const list = QUESTIONS[cur.letter] || [];
-          const stepIdx = (Number(cur.qIndex || 0) % total + total) % total;
-
-          const order = getLetterOrder(room, cur.letter, activeMap, total);
-          const realIndex = order[stepIdx] ?? stepIdx;
-
-          const item = list[realIndex] || {};
-          const q = String(item.q || "").trim();
-
-          qText.textContent = q ? q : `سؤال لحرف ${cur.letter} غير مُدخل بعد`;
+          const idx = Number(cur.qIndex || 0) % Math.max(list.length,1);
+          qText.textContent = list.length ? list[idx] : `لا يوجد سؤال لحرف ${cur.letter}`;
         }else{
           qText.textContent = "اختر حرفًا من الخريطة";
         }
       }
 
-      // زوم
+      // زوم (يحفظ اختيار المقدم في قاعدة البيانات)
+      let zoomSaveTimer = null;
       zoom.addEventListener("input", () => {
         mapScale.style.setProperty("--zoom", zoom.value);
-        updateMapSpacer();
+
+        if(!isHost) return;
+
+        if(zoomSaveTimer) clearTimeout(zoomSaveTimer);
+        zoomSaveTimer = setTimeout(async () => {
+          await update(roomRef, { zoom: Number(zoom.value) });
+        }, 120);
       });
 
       // تغيير الخريطة
@@ -672,29 +611,25 @@
         });
       }
 
-      // ✅ تغيير السؤال: ينتقل للي بعده حتى 25 ثم يرجع للأول
+      // تغيير السؤال
       const nextQ = document.getElementById("nextQ");
       if(nextQ){
         nextQ.addEventListener("click", async () => {
           const cur = room.current || {};
           if(!cur.letter) return;
-
-          const total = 25;
-          const nextIndex = (Number(cur.qIndex || 0) + 1) % total;
+          const list = QUESTIONS[cur.letter] || [];
+          if(!list.length) return;
+          const nextIndex = (Number(cur.qIndex || 0) + 1) % list.length;
           await update(roomRef, { current: { ...cur, qIndex: nextIndex } });
         });
       }
 
-      // كليك المقدم على السداسي: يلوّن + يحدد حرف + يمسح البازر + يرجع لأول سؤال
+      // كليك المقدم على السداسي: يلوّن + يحدد حرف + يمسح البازر
       if(isHost){
         overlay.querySelectorAll(".cell").forEach(cell => {
           cell.addEventListener("click", async (e) => {
             e.preventDefault();
             if(room.status !== "started") return;
-
-            if(!room.qSeed){
-              await update(roomRef, { qSeed: Date.now() });
-            }
 
             const r = Number(cell.getAttribute("data-row"));
             const c = Number(cell.getAttribute("data-col"));
@@ -740,19 +675,16 @@
     // مراقبة الغرفة
     onValue(roomRef, (snap) => {
       if(!snap.exists()){
+        document.body.classList.remove("inGame");
         main.textContent = "اللعبة غير موجودة (رمز غير صحيح).";
         return;
       }
       const room = snap.val();
       gameNameEl.textContent = room?.name ? room.name : "";
 
-      // ✅ تفعيل اللوجو (Fallback)
-      // إذا عندك رابط محفوظ في room.logoUrl أو room.logo أو localStorage.logoUrl
-      const possible = room?.logoUrl || room?.logo || localStorage.getItem("logoUrl") || "logo.png";
-      if(possible) logoEl.src = possible;
-
       if(role === "host"){
         if(!hostKey || hostKey !== room.presenterKey){
+          document.body.classList.remove("inGame");
           main.textContent = "صلاحية المقدم غير صحيحة.";
           return;
         }
@@ -768,6 +700,7 @@
       const me = pid ? players[pid] : null;
 
       if(!pid || !me){
+        document.body.classList.remove("inGame");
         main.textContent = "بيانات اللاعب غير صحيحة.";
         return;
       }
