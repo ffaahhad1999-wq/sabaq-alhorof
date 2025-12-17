@@ -15,6 +15,7 @@
       --orange:#f28c00;
       --red:#c01818;
       --pale:#f3e7a6;
+      --zoom:1;
     }
     body{margin:0;background:var(--bg);font-family:Arial, sans-serif;color:#fff;text-align:center}
     header{position:relative;padding:14px 14px 0}
@@ -30,13 +31,10 @@
     }
 
     .row{display:flex;gap:10px;flex-wrap:wrap;justify-content:center;align-items:center}
-    .btn{
-      padding:12px 14px;font-size:16px;border:none;border-radius:10px;cursor:pointer
-    }
+    .btn{padding:12px 14px;font-size:16px;border:none;border-radius:10px;cursor:pointer}
     .btnYellow{background:var(--yellow);color:#000}
     .btnGreen{background:var(--green);color:#fff}
     .btnRed{background:var(--red);color:#fff}
-    .btnOrange{background:var(--orange);color:#fff}
 
     .codeBox{font-size:18px}
     .codeNum{font-size:28px;font-weight:bold;letter-spacing:2px}
@@ -46,16 +44,13 @@
     .teamGreen{background:rgba(26,163,74,.9)}
     .teamOrange{background:rgba(242,140,0,.9)}
     .teamTitle{font-weight:bold;margin-bottom:8px}
-    .playerItem{
-      background:rgba(255,255,255,.18);
-      padding:8px;border-radius:10px;margin:6px 0;cursor:pointer
-    }
+    .playerItem{background:rgba(255,255,255,.18);padding:8px;border-radius:10px;margin:6px 0;cursor:pointer}
 
     /* MAP */
     .mapOuter{width:100%;display:flex;justify-content:center}
     .mapScale{
       width:min(92vw, 760px);
-      transform:scale(var(--zoom, 1));
+      transform:scale(var(--zoom));
       transform-origin:center top;
     }
     .mapBox{
@@ -67,6 +62,8 @@
       background:#0000;
     }
     .mapBox img{width:100%;height:100%;object-fit:cover;display:block}
+
+    /* مهم: نخلي الـ overlay ما يستقبل ضغط، والضغط يكون على الأزرار فقط */
     .overlay{position:absolute;inset:0;pointer-events:none}
 
     .hexBtn{
@@ -74,33 +71,35 @@
       border:none;
       background:transparent;
       cursor:pointer;
-      clip-path: polygon(50% 0%, 93% 25%, 93% 75%, 50% 100%, 7% 75%, 7% 25%);
-      display:flex;
-      align-items:center;
-      justify-content:center;
-      font-size:24px;
-      color:#000;
-      user-select:none;
-      pointer-events:auto;
-    }
-    .hexState0{background:transparent}
-    .hexState1{background:rgba(243,231,166,.78)}
-    .hexState2{background:rgba(26,163,74,.58)}
-    .hexState3{background:rgba(242,140,0,.58)}
 
-    .below{
-      display:flex;gap:10px;flex-wrap:wrap;justify-content:center;align-items:stretch
+      /* هذا هو السداسي الصحيح للخرائط (Flat-top) */
+      clip-path: polygon(
+        25% 0%,
+        75% 0%,
+        100% 50%,
+        75% 100%,
+        25% 100%,
+        0% 50%
+      );
+
+      display:block;
+      pointer-events:auto; /* الزر نفسه يستقبل الضغط */
+      user-select:none;
+      -webkit-tap-highlight-color: transparent;
     }
+
+    .hexState0{background:transparent}
+    .hexState1{background:rgba(243,231,166,.75)}
+    .hexState2{background:rgba(26,163,74,.55)}
+    .hexState3{background:rgba(242,140,0,.55)}
+
+    .below{display:flex;gap:10px;flex-wrap:wrap;justify-content:center;align-items:stretch}
     .buzzBox{
-      min-width:260px;flex:1;
-      border-radius:12px;padding:12px;color:#fff;
+      min-width:260px;flex:1;border-radius:12px;padding:12px;color:#fff;
       display:flex;align-items:center;justify-content:center;font-size:18px
     }
     .buzzEmpty{background:rgba(0,0,0,.25)}
-    .questionBox{
-      min-width:260px;flex:2;
-      border-radius:12px;padding:12px;background:#fff;color:#111;text-align:right
-    }
+    .questionBox{min-width:260px;flex:2;border-radius:12px;padding:12px;background:#fff;color:#111;text-align:right}
     .qTitle{font-weight:bold;margin-bottom:8px}
     .qText{line-height:1.6}
     .smallNote{font-size:12px;opacity:.85;margin-top:8px}
@@ -117,14 +116,14 @@
 
     .footerBtn{
       width:100%;max-width:520px;margin:10px auto 18px;
-      padding:14px;border:none;border-radius:12px;background:var(--yellow);cursor:pointer;color:#000;font-size:18px
+      padding:14px;border:none;border-radius:12px;background:var(--yellow);
+      cursor:pointer;color:#000;font-size:18px
     }
   </style>
 </head>
 <body>
   <header>
-    <!-- إذا عندك شعار، سمّه logo.png وحطه بجانب الملفات -->
-    <img class="logo" src="logo.png" alt="">
+    <img class="logo" src="" alt="">
     <div id="gameName" class="gameName"></div>
     <h1>سباق الحروف</h1>
   </header>
@@ -147,9 +146,6 @@
       messagingSenderId: "1053646928152",
       appId: "1:1053646928152:web:032d50148c3a4f1148066d"
     };
-
-    // صور الخرائط (عندك داخل مجلد maps وبالامتداد jpeg)
-    const MAP_IMG = ["maps/map1.jpeg","maps/map2.jpeg","maps/map3.jpeg"];
 
     const MAPS = [
       [
@@ -175,7 +171,7 @@
       ]
     ];
 
-    // أسئلة مؤقتة
+    // أسئلة مؤقتة (نستبدلها بملف الأسئلة لاحقاً)
     const QUESTIONS = {};
     const ALL_LETTERS = Array.from(new Set(MAPS.flat(2)));
     for(const L of ALL_LETTERS){
@@ -208,58 +204,36 @@
     function teamColor(team){
       return team === "green" ? "rgba(26,163,74,.9)" : "rgba(242,140,0,.9)";
     }
-
     function escapeHtml(s){
       return String(s ?? "").replace(/[&<>"']/g, c => ({
         "&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#039;"
       }[c]));
     }
-
     function cellKey(row,col){ return `${row}-${col}`; }
 
-    /**
-     * FIX: تم ضبط مواقع السداسيات داخل "منطقة الشبكة" الفعلية داخل الصورة
-     * لأن الصورة فيها إطار أخضر/برتقالي حول الشبكة.
-     */
+    /* توزيع Flat-top مطابق لشكل الخرائط */
     function layoutHexes(container){
       const W = container.clientWidth;
       const H = container.clientHeight;
 
-      // منطقة الشبكة داخل الصورة (جرّبت قيم تعطي تطابق أدق مع خرائطك)
-      const x0 = W * 0.145;
-      const x1 = W * 0.855;
-      const y0 = H * 0.085;
-      const y1 = H * 0.915;
+      // هذه القيم مضبوطة لتقارب خرائطك (Flat-top)
+      const w = W * 0.155;                 // عرض السداسي
+      const h = w * 0.865;                 // ارتفاع السداسي (sqrt(3)/2 تقريباً)
+      const stepX = w * 0.75;              // تداخل أفقي
+      const stepY = h;                     // خطوة عمودية كاملة
 
-      const innerW = (x1 - x0);
-      const innerH = (y1 - y0);
+      const gridW = (4 * stepX) + w;       // 5 أعمدة
+      const gridH = (4 * stepY) + h;       // 5 صفوف (مع إزاحة الأعمدة)
 
-      // عندنا 5 صفوف. ارتفاع الشبكة تقريبًا = 4h (لأن stepY=0.75h)
-      const h = innerH / 4;
-      const w = h / 1.155;
-      const stepY = h * 0.75;
-
-      const gridW = 5*w + (w/2); // 5 أعمدة + إزاحة نصف عمود للصفوف الفردية
-      const gridH = 4*h;
-
-      const marginX = x0 + (innerW - gridW) / 2;
-      const marginY = y0 + (innerH - gridH) / 2;
-
-      // تكبير بسيط عشان اللون يغطي نفس حدود السداسي في الصورة
-      const boost = 1.035;
+      const marginX = (W - gridW) / 2;
+      const marginY = (H - gridH) / 2;
 
       const pos = [];
       for(let row=0; row<5; row++){
         for(let col=0; col<5; col++){
-          const baseLeft = marginX + col*w + (row%2)*(w/2);
-          const baseTop  = marginY + row*stepY;
-
-          const bw = w*boost;
-          const bh = h*boost;
-          const left = baseLeft - (bw - w)/2;
-          const top  = baseTop  - (bh - h)/2;
-
-          pos.push({row,col,left,top,width:bw,height:bh});
+          const left = marginX + col * stepX;
+          const top  = marginY + row * stepY + (col % 2) * (h/2); // إزاحة الأعمدة
+          pos.push({row,col,left,top,width:w,height:h});
         }
       }
       return pos;
@@ -293,14 +267,16 @@
         <div style="height:12px"></div>
 
         <button id="startBtn" class="btn btnGreen">ابدأ اللعبة</button>
-        <div class="smallNote">يمكنك الضغط على اسم لاعب لنقله للفريق الآخر</div>
+        <div class="smallNote">اضغط على اسم لاعب لنقله للفريق الآخر</div>
       `;
 
       const greenList = document.getElementById("greenList");
       const orangeList = document.getElementById("orangeList");
 
       function draw(colEl, arr){
-        colEl.innerHTML = arr.map(p => `<div class="playerItem" data-id="${escapeHtml(p.id)}">${escapeHtml(p.name)}</div>`).join("") || `<div class="smallNote">لا يوجد</div>`;
+        colEl.innerHTML =
+          arr.map(p => `<div class="playerItem" data-id="${escapeHtml(p.id)}">${escapeHtml(p.name)}</div>`).join("")
+          || `<div class="smallNote">لا يوجد</div>`;
       }
       draw(greenList, green);
       draw(orangeList, orange);
@@ -359,17 +335,10 @@
 
         <div class="below">
           <div id="buzzBox" class="buzzBox buzzEmpty">—</div>
-          ${isHost ? `
-            <div class="questionBox">
-              <div class="qTitle">السؤال</div>
-              <div id="qText" class="qText">اختر حرفًا من الخريطة</div>
-            </div>
-          ` : `
-            <div class="questionBox">
-              <div class="qTitle">الحالة</div>
-              <div class="qText">${started ? "جاهز" : "بانتظار المقدم"}</div>
-            </div>
-          `}
+          <div class="questionBox">
+            <div class="qTitle">${isHost ? "السؤال" : "الحالة"}</div>
+            <div id="qText" class="qText">${isHost ? "اختر حرفًا من الخريطة" : (started ? "جاهز" : "بانتظار المقدم")}</div>
+          </div>
         </div>
 
         ${isHost ? `
@@ -394,8 +363,12 @@
       const zoom = document.getElementById("zoom");
 
       const activeMap = Number(room.activeMap || 0);
-      mapImg.src = MAP_IMG[activeMap] || MAP_IMG[0];
 
+      // مسارات صورك الصحيحة داخل مجلد maps وبامتداد jpeg
+      const MAP_SRC = ["maps/map1.jpeg","maps/map2.jpeg","maps/map3.jpeg"];
+      mapImg.src = MAP_SRC[activeMap] || MAP_SRC[0];
+
+      // إنشاء 25 زر (5x5)
       overlay.innerHTML = "";
       for(let row=0; row<5; row++){
         for(let col=0; col<5; col++){
@@ -404,17 +377,11 @@
           btn.type = "button";
           btn.setAttribute("data-row", row);
           btn.setAttribute("data-col", col);
-          btn.textContent = "";
           overlay.appendChild(btn);
         }
       }
 
-      if(!isHost){
-        overlay.style.pointerEvents = "none";
-      }else{
-        overlay.style.pointerEvents = "auto";
-      }
-
+      // تموضع الأزرار فوق الخريطة
       function placeHexes(){
         const pos = layoutHexes(mapBox);
         const buttons = overlay.querySelectorAll(".hexBtn");
@@ -427,6 +394,7 @@
         });
       }
 
+      // تطبيق ألوان الحالات من قاعدة البيانات
       const mapStates = (room.mapStates && room.mapStates[String(activeMap)]) ? room.mapStates[String(activeMap)] : {};
       overlay.querySelectorAll(".hexBtn").forEach(btn => {
         const r = Number(btn.getAttribute("data-row"));
@@ -435,11 +403,14 @@
         const st = Number(mapStates?.[k] ?? 0);
         btn.classList.remove("hexState0","hexState1","hexState2","hexState3");
         btn.classList.add(`hexState${st}`);
+
+        // اللاعب لا يتفاعل مع الخريطة
+        if(!isHost) btn.style.pointerEvents = "none";
       });
 
+      // عرض من ضغط أولاً
       const buzzBox = document.getElementById("buzzBox");
       const buzzer = room.buzzer;
-
       if(buzzer && buzzer.name){
         buzzBox.classList.remove("buzzEmpty");
         buzzBox.style.background = teamColor(buzzer.team);
@@ -450,8 +421,9 @@
         buzzBox.textContent = "—";
       }
 
+      // السؤال للمقدم
+      const qText = document.getElementById("qText");
       if(isHost){
-        const qText = document.getElementById("qText");
         const cur = room.current || {};
         if(cur.letter){
           const list = QUESTIONS[cur.letter] || [];
@@ -462,10 +434,12 @@
         }
       }
 
+      // زوم
       zoom.addEventListener("input", () => {
         mapScale.style.setProperty("--zoom", zoom.value);
       });
 
+      // تغيير الخريطة (مقدم)
       const mapBtn = document.getElementById("mapBtn");
       if(mapBtn){
         mapBtn.addEventListener("click", async () => {
@@ -478,6 +452,7 @@
         });
       }
 
+      // تجميد زر اللاعبين (مقدم)
       const freezeBtn = document.getElementById("freezeBtn");
       if(freezeBtn){
         freezeBtn.addEventListener("click", async () => {
@@ -488,6 +463,7 @@
         });
       }
 
+      // تغيير السؤال (مقدم)
       const nextQ = document.getElementById("nextQ");
       if(nextQ){
         nextQ.addEventListener("click", async () => {
@@ -500,6 +476,7 @@
         });
       }
 
+      // ضغط خلية (مقدم): يغيّر اللون + يحدد الحرف + يمسح البازر
       if(isHost){
         overlay.querySelectorAll(".hexBtn").forEach(btn => {
           btn.addEventListener("click", async () => {
@@ -514,16 +491,17 @@
 
             const letter = MAPS[activeMap][r][c];
 
-            const updatesObj = {};
-            updatesObj[`rooms/${code}/mapStates/${activeMap}/${k}`] = next;
-            updatesObj[`rooms/${code}/buzzer`] = null;
-            updatesObj[`rooms/${code}/current`] = { letter, qIndex: 0, row: r, col: c, map: activeMap };
+            const updates = {};
+            updates[`rooms/${code}/mapStates/${activeMap}/${k}`] = next;
+            updates[`rooms/${code}/buzzer`] = null;
+            updates[`rooms/${code}/current`] = { letter, qIndex: 0, row: r, col: c, map: activeMap };
 
-            await update(ref(db), updatesObj);
+            await update(ref(db), updates);
           });
         });
       }
 
+      // زر اللاعب (لاعب)
       const buzzBtn = document.getElementById("buzzBtn");
       if(buzzBtn){
         const disabled = (!started) || room.freeze || !me || !me.name;
@@ -544,6 +522,7 @@
         });
       }
 
+      // بعد تحميل الصورة نثبت أماكن الأزرار
       if(mapImg.complete){
         placeHexes();
       }else{
