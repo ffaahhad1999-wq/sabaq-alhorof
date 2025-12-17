@@ -5,8 +5,6 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <title>سباق الحروف</title>
   <style>
-    @import url('https://fonts.googleapis.com/css2?family=Cairo:wght@600;700&display=swap');
-
     :root{
       --bg:#1f4fa3;
       --yellow:#f4c400;
@@ -30,44 +28,9 @@
 
     body{margin:0;background:var(--bg);font-family:Arial, sans-serif;color:#fff;text-align:center}
     header{position:relative;padding:14px 14px 0}
-
-    /* ✅ اللوجو */
-    .logo{
-      position:absolute;
-      left:14px;
-      top:12px;
-      width:48px;
-      height:48px;
-      object-fit:contain;
-      display:none; /* يظهر فقط إذا كان عندنا src صحيح */
-    }
-    /* ✅ ملائم وواضح في صفحة اللعبة (كبرناه 10%) */
-    body.inGame .logo{
-      width:70px;
-      height:70px;
-      top:10px;
-      left:12px;
-    }
-
-    /* ✅ تكبير اسم اللعبة الذي يضعه المقدم */
-    .gameName{
-      position:absolute;
-      right:14px;
-      top:18px;
-      font-size:20px;
-      font-family:"Cairo", Arial, sans-serif;
-      font-weight:700;
-      opacity:.98
-    }
-
-    h1{
-      margin:18px 0 10px;
-      color:var(--yellow);
-      font-size:28px;
-      font-family:"Cairo", Arial, sans-serif;
-      font-weight:700;
-    }
-
+    .logo{position:absolute;left:14px;top:14px;width:44px;height:44px;object-fit:contain}
+    .gameName{position:absolute;right:14px;top:20px;font-size:14px;opacity:.95}
+    h1{margin:18px 0 10px;color:var(--yellow);font-size:28px}
     .wrap{width:95%;max-width:900px;margin:0 auto}
 
     .card{
@@ -133,10 +96,10 @@
     }
 
     /* ✅ الحالات (المطلوبة) */
-    .overlaySvg .state0{ fill: rgba(0,0,0,0.001); }
-    .overlaySvg .state1{ fill: var(--hexPale); }
-    .overlaySvg .state2{ fill: var(--hexGreen); }
-    .overlaySvg .state3{ fill: var(--hexOrange); }
+    .overlaySvg .state0{ fill: rgba(0,0,0,0.001); }        /* قابل للنقر بدون ما يبان */
+    .overlaySvg .state1{ fill: var(--hexPale); }           /* أصفر باهت */
+    .overlaySvg .state2{ fill: var(--hexGreen); }          /* أخضر */
+    .overlaySvg .state3{ fill: var(--hexOrange); }         /* برتقالي */
 
     /* ✅ حركة تكرارية فقط للأصفر الباهت */
     @keyframes palePulse {
@@ -185,9 +148,9 @@
 </head>
 <body>
   <header>
-    <img id="logo" class="logo" src="" alt="">
+    <img class="logo" src="" alt="">
     <div id="gameName" class="gameName"></div>
-    <h1>لعبة سباق الحروف</h1>
+    <h1>سباق الحروف</h1>
   </header>
 
   <div class="wrap">
@@ -255,7 +218,6 @@
 
     const main = document.getElementById("main");
     const gameNameEl = document.getElementById("gameName");
-    const logoEl = document.getElementById("logo");
 
     if(!role || !code){
       main.textContent = "بيانات الدخول غير مكتملة.";
@@ -263,20 +225,6 @@
     }
 
     const roomRef = ref(db, `rooms/${code}`);
-
-    function setLogoFromRoom(room){
-      const src =
-        room?.logoUrl ||
-        room?.logoURL ||
-        room?.logo ||
-        room?.logoSrc ||
-        room?.logoPath ||
-        "logo.png";
-
-      logoEl.onerror = () => { logoEl.style.display = "none"; };
-      logoEl.src = src;
-      logoEl.style.display = src ? "block" : "none";
-    }
 
     function teamColor(team){
       return team === "green" ? "rgba(26,163,74,.9)" : "rgba(242,140,0,.9)";
@@ -290,6 +238,7 @@
 
     function cellKey(row,col){ return `${row}-${col}`; }
 
+    // اكتشاف حدود كتلة السداسيات من نفس الصورة
     const BBOX_CACHE = {}; // key = imgSrc
 
     function detectHexBBox(img){
@@ -348,9 +297,11 @@
     function setStateClass(el, st){
       el.classList.remove("state0","state1","state2","state3","pulse");
       el.classList.add(`state${st}`);
+      // ✅ الحركة فقط للأصفر (state1)
       if(st === 1) el.classList.add("pulse");
     }
 
+    // Pointy-Top سداسي (مطابق للخريطة)
     function hexPointsPointyTop(x, y, w, h){
       const pts = [
         [x + w/2, y],
@@ -364,8 +315,6 @@
     }
 
     function renderHostLobby(room){
-      document.body.classList.remove("inGame");
-
       const players = room.players || {};
       const list = Object.entries(players).map(([id,p]) => ({id, ...p}));
 
@@ -427,19 +376,17 @@
     }
 
     function renderWaiting(msg){
-      document.body.classList.remove("inGame");
       main.innerHTML = `<div class="muted">${escapeHtml(msg)}</div>`;
     }
 
     function renderGame(room, me){
-      document.body.classList.add("inGame");
-
       gameNameEl.textContent = room?.name ? room.name : "";
 
       const isHost = role === "host";
       const started = room.status === "started";
 
       main.innerHTML = `
+        <!-- ✅ هذا كان فوق الخريطة: صرنا نخلي هنا فقط الرمز -->
         <div class="row" style="justify-content:space-between">
           <div style="font-size:14px;opacity:.9">رمز: <b>${escapeHtml(room.code)}</b></div>
           <div></div>
@@ -454,9 +401,7 @@
           </div>
         </div>
 
-        <!-- ✅ حل اختفاء الأزرار عند التكبير: سبيسر يحجز مساحة حسب الزوم -->
-        <div id="mapSpacer" style="height:0"></div>
-
+        <!-- ✅ (1) نقلنا أزرار فوق الخريطة لتصبح تحت الخريطة مباشرة -->
         <div style="height:10px"></div>
         <div class="row" style="justify-content:space-between">
           <div class="row">
@@ -466,6 +411,7 @@
           </div>
         </div>
 
+        <!-- ✅ (2) الأزرار/العناصر التي كانت تحت الخريطة صارت تحت الأزرار المنقولة -->
         <div style="height:10px"></div>
         <div class="below">
           <div class="buzzRow" style="flex:1;min-width:260px">
@@ -498,29 +444,19 @@
       const overlay = document.getElementById("overlay");
       const mapScale = document.getElementById("mapScale");
       const zoom = document.getElementById("zoom");
-      const mapSpacer = document.getElementById("mapSpacer");
-
-      function updateMapSpacer(){
-        const z = Number(zoom.value || 1);
-        const H = mapImg.clientHeight || 0;
-        const extra = Math.max(0, (z - 1) * H);
-        mapSpacer.style.height = `${extra}px`;
-      }
-
-      const savedZoom = Number(room.zoom ?? 1);
-      zoom.value = String(savedZoom);
-      mapScale.style.setProperty("--zoom", savedZoom);
 
       const activeMap = Number(room.activeMap || 0);
 
+      /* ✅✅✅ التعديل الوحيد لحل مشكلة اختلاف الحرف بعد تغيير الخريطة */
       const src = ([
-        "maps/map1.jpeg",
-        "maps/map2.jpeg",
-        "maps/map3.jpeg"
-      ][activeMap] || "maps/map1.jpeg");
+        "maps/map3.jpeg", // MAPS[0]
+        "maps/map1.jpeg", // MAPS[1]
+        "maps/map2.jpeg"  // MAPS[2]
+      ][activeMap] || "maps/map3.jpeg");
 
       mapImg.src = src;
 
+      // بناء 25 سداسي
       overlay.innerHTML = "";
       overlay.setAttribute("xmlns", "http://www.w3.org/2000/svg");
 
@@ -573,20 +509,15 @@
 
       function onMapReady(){
         if(!BBOX_CACHE[src]) BBOX_CACHE[src] = detectHexBBox(mapImg);
-        requestAnimationFrame(() => {
-          placeHexes();
-          updateMapSpacer();
-        });
+        requestAnimationFrame(placeHexes);
       }
 
       if(mapImg.complete) onMapReady();
       else mapImg.addEventListener("load", onMapReady, { once:true });
 
-      window.addEventListener("resize", () => {
-        placeHexes();
-        updateMapSpacer();
-      });
+      window.addEventListener("resize", placeHexes);
 
+      // حالات التلوين
       const mapStates = (room.mapStates && room.mapStates[String(activeMap)]) ? room.mapStates[String(activeMap)] : {};
       overlay.querySelectorAll(".cell").forEach(cell => {
         const r = Number(cell.getAttribute("data-row"));
@@ -596,6 +527,7 @@
         setStateClass(cell, st);
       });
 
+      // اسم أول ضاغط
       const buzzBox = document.getElementById("buzzBox");
       const buzzer = room.buzzer;
 
@@ -609,6 +541,7 @@
         buzzBox.textContent = "—";
       }
 
+      // سؤال المقدم
       if(isHost){
         const qText = document.getElementById("qText");
         const cur = room.current || {};
@@ -621,19 +554,12 @@
         }
       }
 
-      let zoomSaveTimer = null;
+      // زوم
       zoom.addEventListener("input", () => {
         mapScale.style.setProperty("--zoom", zoom.value);
-        updateMapSpacer();
-
-        if(!isHost) return;
-
-        if(zoomSaveTimer) clearTimeout(zoomSaveTimer);
-        zoomSaveTimer = setTimeout(async () => {
-          await update(roomRef, { zoom: Number(zoom.value) });
-        }, 120);
       });
 
+      // تغيير الخريطة
       const mapBtn = document.getElementById("mapBtn");
       if(mapBtn){
         mapBtn.addEventListener("click", async () => {
@@ -646,6 +572,7 @@
         });
       }
 
+      // تجميد اللاعبين + يمسح اسم الضاغط
       const freezeBtn = document.getElementById("freezeBtn");
       if(freezeBtn){
         freezeBtn.addEventListener("click", async () => {
@@ -653,6 +580,7 @@
         });
       }
 
+      // تغيير السؤال
       const nextQ = document.getElementById("nextQ");
       if(nextQ){
         nextQ.addEventListener("click", async () => {
@@ -665,6 +593,7 @@
         });
       }
 
+      // كليك المقدم على السداسي: يلوّن + يحدد حرف + يمسح البازر
       if(isHost){
         overlay.querySelectorAll(".cell").forEach(cell => {
           cell.addEventListener("click", async (e) => {
@@ -690,6 +619,7 @@
         });
       }
 
+      // زر اللاعب الكبير
       const buzzBtn = document.getElementById("buzzBtn");
       if(buzzBtn){
         const disabled = (!started) || room.freeze || !me || !me.name;
@@ -711,22 +641,17 @@
       }
     }
 
+    // مراقبة الغرفة
     onValue(roomRef, (snap) => {
       if(!snap.exists()){
-        document.body.classList.remove("inGame");
         main.textContent = "اللعبة غير موجودة (رمز غير صحيح).";
         return;
       }
-
       const room = snap.val();
-
-      setLogoFromRoom(room);
-
       gameNameEl.textContent = room?.name ? room.name : "";
 
       if(role === "host"){
         if(!hostKey || hostKey !== room.presenterKey){
-          document.body.classList.remove("inGame");
           main.textContent = "صلاحية المقدم غير صحيحة.";
           return;
         }
@@ -742,7 +667,6 @@
       const me = pid ? players[pid] : null;
 
       if(!pid || !me){
-        document.body.classList.remove("inGame");
         main.textContent = "بيانات اللاعب غير صحيحة.";
         return;
       }
