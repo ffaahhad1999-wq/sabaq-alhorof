@@ -96,10 +96,10 @@
     }
 
     /* ✅ الحالات (المطلوبة) */
-    .overlaySvg .state0{ fill: rgba(0,0,0,0.001); }        /* قابل للنقر بدون ما يبان */
-    .overlaySvg .state1{ fill: var(--hexPale); }           /* أصفر باهت */
-    .overlaySvg .state2{ fill: var(--hexGreen); }          /* أخضر */
-    .overlaySvg .state3{ fill: var(--hexOrange); }         /* برتقالي */
+    .overlaySvg .state0{ fill: rgba(0,0,0,0.001); }
+    .overlaySvg .state1{ fill: var(--hexPale); }
+    .overlaySvg .state2{ fill: var(--hexGreen); }
+    .overlaySvg .state3{ fill: var(--hexOrange); }
 
     /* ✅ حركة تكرارية فقط للأصفر الباهت */
     @keyframes palePulse {
@@ -200,11 +200,10 @@
     const QUESTIONS = {};
     const ALL_LETTERS = Array.from(new Set(MAPS.flat(2)));
 
-    // كل عنصر: { q: نص السؤال, a: الإجابة }
     function createEmptyQuestionsForLetter(letter, count = 25){
       return Array.from({ length: count }, () => ({
-        q: "",   // سيتم تعبئته لاحقًا
-        a: ""    // سيتم تعبئته لاحقًا
+        q: "",
+        a: ""
       }));
     }
 
@@ -212,7 +211,7 @@
       QUESTIONS[L] = createEmptyQuestionsForLetter(L, 25);
     }
 
-    // ✅ عشوائية "ثابتة" لكل حرف داخل الغرفة: ترتيب الأسئلة يكون shuffled لكن ثابت مع نفس seed
+    // ✅ عشوائية تلقائية (بدون زر) وترتيب ثابت داخل الغرفة لكل حرف
     function fnv1a32(str){
       let h = 0x811c9dc5;
       for(let i=0;i<str.length;i++){
@@ -247,22 +246,6 @@
       const mix = fnv1a32(`${letter}:${mapIndex}`);
       const seed = (base ^ mix) >>> 0;
       return shuffledOrder(total, seed);
-    }
-
-    // ✅ تجهيز تطبيع نص عربي (لاستخدامه لاحقاً للتحقق من أول حرف)
-    function normalizeArabic(str){
-      return String(str ?? "")
-        .replace(/[\u064B-\u065F\u0670\u0640]/g, "") // حركات + تطويل
-        .replace(/[إأآٱ]/g, "ا")
-        .replace(/ى/g, "ي")
-        .replace(/ة/g, "ه")
-        .replace(/\s+/g, " ")
-        .trim();
-    }
-    function firstArabicLetter(str){
-      const s = normalizeArabic(str);
-      const m = s.match(/[اأإآٱبپتثجحخدذرزسشصضطظعغفقكلمناهوي]/);
-      return m ? m[0] : "";
     }
 
     const app = initializeApp(firebaseConfig);
@@ -355,7 +338,6 @@
     function setStateClass(el, st){
       el.classList.remove("state0","state1","state2","state3","pulse");
       el.classList.add(`state${st}`);
-      // ✅ الحركة فقط للأصفر (state1)
       if(st === 1) el.classList.add("pulse");
     }
 
@@ -428,9 +410,8 @@
           activeMap: 0,
           freeze: false,
           buzzer: null,
-          // ✅ seed ثابت لترتيب الأسئلة العشوائي داخل الغرفة
           qSeed: Date.now(),
-          current: { letter: null, qIndex: 0, row: null, col: null, map: 0, showA: false }
+          current: { letter: null, qIndex: 0, row: null, col: null, map: 0 }
         });
       });
     }
@@ -446,7 +427,6 @@
       const started = room.status === "started";
 
       main.innerHTML = `
-        <!-- ✅ هذا كان فوق الخريطة: صرنا نخلي هنا فقط الرمز -->
         <div class="row" style="justify-content:space-between">
           <div style="font-size:14px;opacity:.9">رمز: <b>${escapeHtml(room.code)}</b></div>
           <div></div>
@@ -461,7 +441,6 @@
           </div>
         </div>
 
-        <!-- ✅ (1) نقلنا أزرار فوق الخريطة لتصبح تحت الخريطة مباشرة -->
         <div style="height:10px"></div>
         <div class="row" style="justify-content:space-between">
           <div class="row">
@@ -471,7 +450,6 @@
           </div>
         </div>
 
-        <!-- ✅ (2) الأزرار/العناصر التي كانت تحت الخريطة صارت تحت الأزرار المنقولة -->
         <div style="height:10px"></div>
         <div class="below">
           <div class="buzzRow" style="flex:1;min-width:260px">
@@ -481,15 +459,8 @@
 
           ${isHost ? `
             <div class="questionBox">
-              <div class="row" style="justify-content:space-between;align-items:center">
-                <div class="qTitle" style="margin:0">السؤال</div>
-                <button id="toggleA" class="btn btnYellow" style="padding:8px 10px;font-size:14px">إظهار الإجابة</button>
-              </div>
-              <div id="qText" class="qText" style="margin-top:8px">اختر حرفًا من الخريطة</div>
-
-              <div style="height:10px"></div>
-              <div class="qTitle">الإجابة</div>
-              <div id="aText" class="qText">—</div>
+              <div class="qTitle">السؤال</div>
+              <div id="qText" class="qText">اختر حرفًا من الخريطة</div>
             </div>
           ` : `
             <div class="questionBox">
@@ -607,18 +578,14 @@
         buzzBox.textContent = "—";
       }
 
-      // سؤال/إجابة المقدم (مع ترتيب عشوائي ثابت)
+      // ✅ سؤال المقدم (بدون أرقام) — يتبع ترتيب عشوائي ثابت لكل حرف
       if(isHost){
         const qText = document.getElementById("qText");
-        const aText = document.getElementById("aText");
-        const toggleA = document.getElementById("toggleA");
-
         const cur = room.current || {};
-        const showA = !!cur.showA;
+        const total = 25;
 
         if(cur.letter){
           const list = QUESTIONS[cur.letter] || [];
-          const total = 25; // ثابت
           const stepIdx = (Number(cur.qIndex || 0) % total + total) % total;
 
           const order = getLetterOrder(room, cur.letter, activeMap, total);
@@ -626,32 +593,10 @@
 
           const item = list[realIndex] || {};
           const q = String(item.q || "").trim();
-          const a = String(item.a || "").trim();
 
-          qText.textContent = q
-            ? q
-            : `سؤال (${stepIdx+1}/${total}) لحرف ${cur.letter} غير مُدخل بعد`;
-
-          if(showA){
-            aText.textContent = a ? a : `إجابة هذا السؤال غير مُدخلة بعد`;
-            toggleA.textContent = "إخفاء الإجابة";
-          }else{
-            aText.textContent = "مخفية";
-            toggleA.textContent = "إظهار الإجابة";
-          }
+          qText.textContent = q ? q : `سؤال لحرف ${cur.letter} غير مُدخل بعد`;
         }else{
           qText.textContent = "اختر حرفًا من الخريطة";
-          aText.textContent = "—";
-          toggleA.textContent = "إظهار الإجابة";
-        }
-
-        // زر إظهار/إخفاء الإجابة (للمقدم فقط)
-        if(toggleA){
-          toggleA.addEventListener("click", async () => {
-            const cur2 = room.current || {};
-            if(!cur2.letter) return;
-            await update(roomRef, { current: { ...cur2, showA: !cur2.showA } });
-          });
         }
       }
 
@@ -660,7 +605,7 @@
         mapScale.style.setProperty("--zoom", zoom.value);
       });
 
-      // تغيير الخريطة (ويخفي الإجابة)
+      // تغيير الخريطة
       const mapBtn = document.getElementById("mapBtn");
       if(mapBtn){
         mapBtn.addEventListener("click", async () => {
@@ -668,7 +613,7 @@
           await update(roomRef, {
             activeMap: next,
             buzzer: null,
-            current: { letter: null, qIndex: 0, row: null, col: null, map: next, showA: false }
+            current: { letter: null, qIndex: 0, row: null, col: null, map: next }
           });
         });
       }
@@ -681,27 +626,26 @@
         });
       }
 
-      // تغيير السؤال (يمشي للأمام + يرجع للبداية بعد 25) + يخفي الإجابة
+      // ✅ تغيير السؤال: ينتقل للي بعده حتى 25 ثم يرجع للأول (بدون ما نعرض أرقام)
       const nextQ = document.getElementById("nextQ");
       if(nextQ){
         nextQ.addEventListener("click", async () => {
           const cur = room.current || {};
           if(!cur.letter) return;
 
-          const total = 25; // ثابت
+          const total = 25;
           const nextIndex = (Number(cur.qIndex || 0) + 1) % total;
-          await update(roomRef, { current: { ...cur, qIndex: nextIndex, showA: false } });
+          await update(roomRef, { current: { ...cur, qIndex: nextIndex } });
         });
       }
 
-      // كليك المقدم على السداسي: يلوّن + يحدد حرف + يمسح البازر + يخفي الإجابة
+      // كليك المقدم على السداسي: يلوّن + يحدد حرف + يمسح البازر + يرجع لأول سؤال (داخليًا)
       if(isHost){
         overlay.querySelectorAll(".cell").forEach(cell => {
           cell.addEventListener("click", async (e) => {
             e.preventDefault();
             if(room.status !== "started") return;
 
-            // ✅ لو الغرفة قديمة وما فيها qSeed: نضيفه مرة واحدة
             if(!room.qSeed){
               await update(roomRef, { qSeed: Date.now() });
             }
@@ -718,7 +662,7 @@
             const updates = {};
             updates[`rooms/${code}/mapStates/${activeMap}/${k}`] = next;
             updates[`rooms/${code}/buzzer`] = null;
-            updates[`rooms/${code}/current`] = { letter, qIndex: 0, row: r, col: c, map: activeMap, showA: false };
+            updates[`rooms/${code}/current`] = { letter, qIndex: 0, row: r, col: c, map: activeMap };
 
             await update(ref(db), updates);
           });
