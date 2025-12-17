@@ -15,7 +15,7 @@
       --orange:#f28c00;
       --red:#c01818;
 
-      /* ✅ ألوان السداسي: (فقط تم تعديل هذين اللونين) */
+      /* ✅ ألوان السداسي */
       --hexGreen:  rgba(0, 140, 70, .42);
       --hexOrange: rgba(255, 140, 0, .42);
 
@@ -26,16 +26,17 @@
       --hexBorder: rgba(0,0,0,.10);
     }
 
-    body{margin:0;background:var(--bg);font-family:Arial, sans-serif;color:#fff;text-align:center}
-    header{position:relative;padding:14px 14px 0}
-
-    /* ✅ اللوجو (كبير + نفس مكانه بكل الصفحات) */
-    .logo{
-      position:absolute;left:14px;top:14px;
-      width:86px;height:86px;object-fit:contain;
-      pointer-events:none;
+    body{
+      margin:0;
+      background:var(--bg);
+      font-family:Arial, sans-serif;
+      color:#fff;
+      text-align:center;
+      padding-bottom:110px; /* ✅ مساحة لزر الرجوع بأسفل الشاشة */
+      box-sizing:border-box;
     }
-
+    header{position:relative;padding:14px 14px 0}
+    .logo{position:absolute;left:14px;top:14px;width:44px;height:44px;object-fit:contain}
     .gameName{position:absolute;right:14px;top:20px;font-size:14px;opacity:.95}
     h1{margin:18px 0 10px;color:var(--yellow);font-size:28px}
     .wrap{width:95%;max-width:900px;margin:0 auto}
@@ -102,11 +103,11 @@
       stroke-width: 1;
     }
 
-    /* ✅ الحالات (المطلوبة) */
-    .overlaySvg .state0{ fill: rgba(0,0,0,0.001); }        /* قابل للنقر بدون ما يبان */
-    .overlaySvg .state1{ fill: var(--hexPale); }           /* أصفر باهت */
-    .overlaySvg .state2{ fill: var(--hexGreen); }          /* أخضر */
-    .overlaySvg .state3{ fill: var(--hexOrange); }         /* برتقالي */
+    /* ✅ الحالات */
+    .overlaySvg .state0{ fill: rgba(0,0,0,0.001); }
+    .overlaySvg .state1{ fill: var(--hexPale); }
+    .overlaySvg .state2{ fill: var(--hexGreen); }
+    .overlaySvg .state3{ fill: var(--hexOrange); }
 
     /* ✅ حركة تكرارية فقط للأصفر الباهت */
     @keyframes palePulse {
@@ -125,12 +126,26 @@
       display:flex;align-items:center;justify-content:center;font-size:18px
     }
     .buzzEmpty{background:rgba(0,0,0,.25)}
+
+    /* ✅ تكبير مربع السؤال */
     .questionBox{
       min-width:260px;flex:2;
-      border-radius:12px;padding:12px;background:#fff;color:#111;text-align:right
+      border-radius:12px;padding:12px;background:#fff;color:#111;text-align:right;
+      display:flex;flex-direction:column;
+      box-sizing:border-box;
     }
     .qTitle{font-weight:bold;margin-bottom:8px}
-    .qText{line-height:1.6}
+    .qText{
+      line-height:1.8;
+      flex:1;
+      min-height:320px;          /* ✅ أكبر على الكمبيوتر */
+      overflow:auto;
+      white-space:pre-wrap;
+    }
+    @media (max-width: 700px){
+      .qText{ min-height:45vh; } /* ✅ أكبر على الجوال مثل الصورة */
+    }
+
     .smallNote{font-size:12px;opacity:.85;margin-top:8px}
 
     .buzzRow{display:flex;gap:10px;flex-wrap:wrap;align-items:stretch;justify-content:center}
@@ -146,24 +161,37 @@
     }
     .disabled{opacity:.5;cursor:not-allowed}
 
+    /* ✅ نقل زر الرجوع للمكان المحدد بأسفل الشاشة */
     .footerBtn{
-      width:100%;max-width:520px;margin:10px auto 18px;
-      padding:14px;border:none;border-radius:12px;background:var(--yellow);cursor:pointer;color:#000;font-size:18px
+      position:fixed;
+      left:50%;
+      transform:translateX(-50%);
+      bottom:calc(env(safe-area-inset-bottom, 0px) + 14px);
+      width:min(92vw, 520px);
+      padding:14px;
+      border:none;border-radius:12px;
+      background:var(--yellow);
+      cursor:pointer;
+      color:#000;
+      font-size:18px;
+      z-index:999;
     }
+
     a{color:inherit}
   </style>
 </head>
 <body>
   <header>
-    <img class="logo" src="logo.png" alt="شعار صندوق المسابقات">
+    <img class="logo" src="" alt="">
     <div id="gameName" class="gameName"></div>
     <h1>سباق الحروف</h1>
   </header>
 
   <div class="wrap">
     <div id="main" class="card">جاري التحميل...</div>
-    <button class="footerBtn" onclick="location.href='index.html'">الرجوع للرئيسية</button>
   </div>
+
+  <button class="footerBtn" onclick="location.href='index.html'">الرجوع للرئيسية</button>
 
   <script type="module">
     import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.5/firebase-app.js";
@@ -203,7 +231,6 @@
       ]
     ];
 
-    // أسئلة مؤقتة (إلى أن ترسل PDF)
     const QUESTIONS = {};
     const ALL_LETTERS = Array.from(new Set(MAPS.flat(2)));
     for(const L of ALL_LETTERS){
@@ -245,8 +272,7 @@
 
     function cellKey(row,col){ return `${row}-${col}`; }
 
-    // اكتشاف حدود كتلة السداسيات من نفس الصورة
-    const BBOX_CACHE = {}; // key = imgSrc
+    const BBOX_CACHE = {};
 
     function detectHexBBox(img){
       const nw = img.naturalWidth, nh = img.naturalHeight;
@@ -307,7 +333,6 @@
       if(st === 1) el.classList.add("pulse");
     }
 
-    // Pointy-Top سداسي (مطابق للخريطة)
     function hexPointsPointyTop(x, y, w, h){
       const pts = [
         [x + w/2, y],
