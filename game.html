@@ -15,7 +15,7 @@
       --orange:#f28c00;
       --red:#c01818;
 
-      /* ✅ ألوان السداسي */
+      /* ✅ ألوان السداسي: (فقط تم تعديل هذين اللونين) */
       --hexGreen:  rgba(0, 140, 70, .42);
       --hexOrange: rgba(255, 140, 0, .42);
 
@@ -24,24 +24,11 @@
 
       /* حد خفيف جداً يعطي تطابق بصري أفضل */
       --hexBorder: rgba(0,0,0,.10);
-
-      /* ✅ لون دافئ للمربع الكبير */
-      --warmBox: #fff3dd;
     }
 
-    body{
-      margin:0;
-      background:var(--bg);
-      font-family:Arial, sans-serif;
-      color:#fff;
-      text-align:center;
-      padding-bottom:110px;
-      box-sizing:border-box;
-    }
-
+    body{margin:0;background:var(--bg);font-family:Arial, sans-serif;color:#fff;text-align:center}
     header{position:relative;padding:14px 14px 0}
-    /* ✅ اللوجو موجود الآن */
-    .logo{position:absolute;left:14px;top:14px;width:54px;height:54px;object-fit:contain}
+    .logo{position:absolute;left:14px;top:14px;width:44px;height:44px;object-fit:contain}
     .gameName{position:absolute;right:14px;top:20px;font-size:14px;opacity:.95}
     h1{margin:18px 0 10px;color:var(--yellow);font-size:28px}
     .wrap{width:95%;max-width:900px;margin:0 auto}
@@ -108,11 +95,13 @@
       stroke-width: 1;
     }
 
-    .overlaySvg .state0{ fill: rgba(0,0,0,0.001); }
-    .overlaySvg .state1{ fill: var(--hexPale); }
-    .overlaySvg .state2{ fill: var(--hexGreen); }
-    .overlaySvg .state3{ fill: var(--hexOrange); }
+    /* ✅ الحالات (المطلوبة) */
+    .overlaySvg .state0{ fill: rgba(0,0,0,0.001); }        /* قابل للنقر بدون ما يبان */
+    .overlaySvg .state1{ fill: var(--hexPale); }           /* أصفر باهت */
+    .overlaySvg .state2{ fill: var(--hexGreen); }          /* أخضر */
+    .overlaySvg .state3{ fill: var(--hexOrange); }         /* برتقالي */
 
+    /* ✅ حركة تكرارية فقط للأصفر الباهت */
     @keyframes palePulse {
       0%   { opacity: 1; }
       50%  { opacity: .35; }
@@ -122,61 +111,23 @@
       animation: palePulse 0.9s ease-in-out infinite;
     }
 
-    /* ✅ شريط أزرار (الأصفر في الصورة) */
-    .controlBar{
-      margin-top:10px;
-      display:flex;
-      gap:10px;
-      flex-wrap:wrap;
-      align-items:center;
-      justify-content:space-between;
-      background:rgba(255,255,255,.35);
-      border-radius:12px;
-      padding:10px;
-    }
-    .controlBar .leftGroup{display:flex;gap:10px;align-items:center;flex-wrap:wrap}
-    .controlBar .rightGroup{display:flex;gap:10px;align-items:center;flex-wrap:wrap}
-    .zoomWrap input[type="range"]{width:180px;max-width:55vw}
-
-    /* ✅ شريط (الأحمر في الصورة) لاسم الضاغط + تغيير السؤال */
-    .actionBar{
-      margin-top:10px;
-      display:flex;
-      gap:10px;
-      flex-wrap:wrap;
-      align-items:stretch;
-      justify-content:space-between;
-    }
-
+    .below{display:flex;gap:10px;flex-wrap:wrap;justify-content:center;align-items:stretch}
     .buzzBox{
       min-width:260px;flex:1;
       border-radius:12px;padding:12px;color:#fff;
       display:flex;align-items:center;justify-content:center;font-size:18px
     }
     .buzzEmpty{background:rgba(0,0,0,.25)}
-
-    /* ✅ المربع الكبير (دفء + أكبر) */
     .questionBox{
-      margin-top:10px;
-      border-radius:12px;
-      padding:14px;
-      background:var(--warmBox);
-      color:#111;
-      text-align:right;
-      box-sizing:border-box;
+      min-width:260px;flex:2;
+      border-radius:12px;padding:12px;background:#fff;color:#111;text-align:right
     }
     .qTitle{font-weight:bold;margin-bottom:8px}
-    .qText{
-      line-height:1.8;
-      min-height:320px;
-      overflow:auto;
-      white-space:pre-wrap;
-    }
-    @media (max-width: 700px){
-      .qText{ min-height:48vh; }
-    }
-
+    .qText{line-height:1.6}
     .smallNote{font-size:12px;opacity:.85;margin-top:8px}
+
+    .buzzRow{display:flex;gap:10px;flex-wrap:wrap;align-items:stretch;justify-content:center}
+    .nextQBtn{min-width:160px}
 
     .playerBtnWrap{margin-top:14px}
     .playerBigBtn{
@@ -189,36 +140,23 @@
     .disabled{opacity:.5;cursor:not-allowed}
 
     .footerBtn{
-      position:fixed;
-      left:50%;
-      transform:translateX(-50%);
-      bottom:calc(env(safe-area-inset-bottom, 0px) + 14px);
-      width:min(92vw, 520px);
-      padding:14px;
-      border:none;border-radius:12px;
-      background:var(--yellow);
-      cursor:pointer;
-      color:#000;
-      font-size:18px;
-      z-index:999;
+      width:100%;max-width:520px;margin:10px auto 18px;
+      padding:14px;border:none;border-radius:12px;background:var(--yellow);cursor:pointer;color:#000;font-size:18px
     }
-
     a{color:inherit}
   </style>
 </head>
 <body>
   <header>
-    <!-- ✅ ضع ملف اللوجو باسم logo.png بجانب هذا الملف -->
-    <img class="logo" src="logo.png" alt="شعار">
+    <img class="logo" src="" alt="">
     <div id="gameName" class="gameName"></div>
     <h1>سباق الحروف</h1>
   </header>
 
   <div class="wrap">
     <div id="main" class="card">جاري التحميل...</div>
+    <button class="footerBtn" onclick="location.href='index.html'">الرجوع للرئيسية</button>
   </div>
-
-  <button class="footerBtn" onclick="location.href='index.html'">الرجوع للرئيسية</button>
 
   <script type="module">
     import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.5/firebase-app.js";
@@ -258,14 +196,20 @@
       ]
     ];
 
+    // ✅ نظام أسئلة جاهز (بدون محتوى فعلي) — 25 سؤال لكل حرف
     const QUESTIONS = {};
     const ALL_LETTERS = Array.from(new Set(MAPS.flat(2)));
+
+    // كل عنصر: { q: نص السؤال, a: الإجابة }
+    function createEmptyQuestionsForLetter(letter, count = 25){
+      return Array.from({ length: count }, (_, i) => ({
+        q: "",   // سيتم تعبئته لاحقًا
+        a: ""    // سيتم تعبئته لاحقًا
+      }));
+    }
+
     for(const L of ALL_LETTERS){
-      QUESTIONS[L] = [
-        `سؤال 1 بحرف ${L}`,
-        `سؤال 2 بحرف ${L}`,
-        `سؤال 3 بحرف ${L}`
-      ];
+      QUESTIONS[L] = createEmptyQuestionsForLetter(L, 25);
     }
 
     const app = initializeApp(firebaseConfig);
@@ -299,7 +243,8 @@
 
     function cellKey(row,col){ return `${row}-${col}`; }
 
-    const BBOX_CACHE = {};
+    // اكتشاف حدود كتلة السداسيات من نفس الصورة
+    const BBOX_CACHE = {}; // key = imgSrc
 
     function detectHexBBox(img){
       const nw = img.naturalWidth, nh = img.naturalHeight;
@@ -357,9 +302,11 @@
     function setStateClass(el, st){
       el.classList.remove("state0","state1","state2","state3","pulse");
       el.classList.add(`state${st}`);
+      // ✅ الحركة فقط للأصفر (state1)
       if(st === 1) el.classList.add("pulse");
     }
 
+    // Pointy-Top سداسي (مطابق للخريطة)
     function hexPointsPointyTop(x, y, w, h){
       const pts = [
         [x + w/2, y],
@@ -444,8 +391,10 @@
       const started = room.status === "started";
 
       main.innerHTML = `
+        <!-- ✅ هذا كان فوق الخريطة: صرنا نخلي هنا فقط الرمز -->
         <div class="row" style="justify-content:space-between">
           <div style="font-size:14px;opacity:.9">رمز: <b>${escapeHtml(room.code)}</b></div>
+          <div></div>
         </div>
 
         <div class="mapOuter">
@@ -457,30 +406,35 @@
           </div>
         </div>
 
-        <!-- ✅ (الأصفر) مكان أزرار الخريطة/الزوم/التجميد -->
-        <div class="controlBar">
-          <div class="leftGroup">
+        <!-- ✅ (1) نقلنا أزرار فوق الخريطة لتصبح تحت الخريطة مباشرة -->
+        <div style="height:10px"></div>
+        <div class="row" style="justify-content:space-between">
+          <div class="row">
+            ${isHost ? `<button id="mapBtn" class="btn btnYellow">تغيير الخريطة</button>` : ""}
+            <input id="zoom" type="range" min="0.8" max="1.35" step="0.01" value="1" />
             ${isHost ? `<button id="freezeBtn" class="btn ${room.freeze ? "btnRed" : "btnGreen"}">${room.freeze ? "مجمّد" : "مفعل"}</button>` : ""}
           </div>
+        </div>
 
-          <div class="rightGroup">
-            ${isHost ? `<button id="mapBtn" class="btn btnYellow">تغيير الخريطة</button>` : ""}
-            <div class="zoomWrap">
-              <input id="zoom" type="range" min="0.8" max="1.35" step="0.01" value="1" />
-            </div>
+        <!-- ✅ (2) الأزرار/العناصر التي كانت تحت الخريطة صارت تحت الأزرار المنقولة -->
+        <div style="height:10px"></div>
+        <div class="below">
+          <div class="buzzRow" style="flex:1;min-width:260px">
+            <div id="buzzBox" class="buzzBox buzzEmpty">—</div>
+            ${isHost ? `<button id="nextQ" class="btn btnYellow nextQBtn">تغيير السؤال</button>` : ""}
           </div>
-        </div>
 
-        <!-- ✅ (الأحمر) اسم الضاغط + تغيير السؤال -->
-        <div class="actionBar">
-          <div id="buzzBox" class="buzzBox buzzEmpty">—</div>
-          ${isHost ? `<button id="nextQ" class="btn btnYellow" style="min-width:160px">تغيير السؤال</button>` : ""}
-        </div>
-
-        <!-- ✅ المربع الكبير الدافئ -->
-        <div class="questionBox">
-          <div class="qTitle">السؤال</div>
-          <div id="qText" class="qText">اختر حرفًا من الخريطة</div>
+          ${isHost ? `
+            <div class="questionBox">
+              <div class="qTitle">السؤال</div>
+              <div id="qText" class="qText">اختر حرفًا من الخريطة</div>
+            </div>
+          ` : `
+            <div class="questionBox">
+              <div class="qTitle">الحالة</div>
+              <div class="qText">${started ? "جاهز" : "بانتظار المقدم"}</div>
+            </div>
+          `}
         </div>
 
         ${(!isHost) ? `
@@ -506,6 +460,7 @@
 
       mapImg.src = src;
 
+      // بناء 25 سداسي
       overlay.innerHTML = "";
       overlay.setAttribute("xmlns", "http://www.w3.org/2000/svg");
 
@@ -566,6 +521,7 @@
 
       window.addEventListener("resize", placeHexes);
 
+      // حالات التلوين
       const mapStates = (room.mapStates && room.mapStates[String(activeMap)]) ? room.mapStates[String(activeMap)] : {};
       overlay.querySelectorAll(".cell").forEach(cell => {
         const r = Number(cell.getAttribute("data-row"));
@@ -575,6 +531,7 @@
         setStateClass(cell, st);
       });
 
+      // اسم أول ضاغط
       const buzzBox = document.getElementById("buzzBox");
       const buzzer = room.buzzer;
 
@@ -588,21 +545,30 @@
         buzzBox.textContent = "—";
       }
 
-      // ✅ عرض السؤال داخل المربع الكبير
-      const qText = document.getElementById("qText");
-      const cur = room.current || {};
-      if(cur.letter){
-        const list = QUESTIONS[cur.letter] || [];
-        const idx = Number(cur.qIndex || 0) % Math.max(list.length,1);
-        qText.textContent = list.length ? list[idx] : `لا يوجد سؤال لحرف ${cur.letter}`;
-      }else{
-        qText.textContent = "اختر حرفًا من الخريطة";
+      // سؤال المقدم
+      if(isHost){
+        const qText = document.getElementById("qText");
+        const cur = room.current || {};
+        if(cur.letter){
+          const list = QUESTIONS[cur.letter] || [];
+          const total = list.length || 25;
+          const idx = Number(cur.qIndex || 0) % total;
+
+          const item = list[idx] || {};
+          const q = String(item.q || "").trim();
+
+          qText.textContent = q ? q : `سؤال (${idx+1}/${total}) لحرف ${cur.letter} غير مُدخل بعد`;
+        }else{
+          qText.textContent = "اختر حرفًا من الخريطة";
+        }
       }
 
+      // زوم
       zoom.addEventListener("input", () => {
         mapScale.style.setProperty("--zoom", zoom.value);
       });
 
+      // تغيير الخريطة
       const mapBtn = document.getElementById("mapBtn");
       if(mapBtn){
         mapBtn.addEventListener("click", async () => {
@@ -615,6 +581,7 @@
         });
       }
 
+      // تجميد اللاعبين + يمسح اسم الضاغط
       const freezeBtn = document.getElementById("freezeBtn");
       if(freezeBtn){
         freezeBtn.addEventListener("click", async () => {
@@ -622,18 +589,22 @@
         });
       }
 
+      // تغيير السؤال
       const nextQ = document.getElementById("nextQ");
       if(nextQ){
         nextQ.addEventListener("click", async () => {
           const cur = room.current || {};
           if(!cur.letter) return;
+
           const list = QUESTIONS[cur.letter] || [];
-          if(!list.length) return;
-          const nextIndex = (Number(cur.qIndex || 0) + 1) % list.length;
+          const total = list.length || 25;
+
+          const nextIndex = (Number(cur.qIndex || 0) + 1) % total;
           await update(roomRef, { current: { ...cur, qIndex: nextIndex } });
         });
       }
 
+      // كليك المقدم على السداسي: يلوّن + يحدد حرف + يمسح البازر
       if(isHost){
         overlay.querySelectorAll(".cell").forEach(cell => {
           cell.addEventListener("click", async (e) => {
@@ -659,6 +630,7 @@
         });
       }
 
+      // زر اللاعب الكبير
       const buzzBtn = document.getElementById("buzzBtn");
       if(buzzBtn){
         const disabled = (!started) || room.freeze || !me || !me.name;
@@ -680,6 +652,7 @@
       }
     }
 
+    // مراقبة الغرفة
     onValue(roomRef, (snap) => {
       if(!snap.exists()){
         main.textContent = "اللعبة غير موجودة (رمز غير صحيح).";
