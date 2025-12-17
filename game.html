@@ -15,13 +15,14 @@
       --orange:#f28c00;
       --red:#c01818;
 
-      /* ✅ ألوان السداسي */
+      /* ✅ ألوان السداسي: (فقط تم تعديل هذين اللونين) */
       --hexGreen:  rgba(0, 140, 70, .42);
       --hexOrange: rgba(255, 140, 0, .42);
 
-      /* ✅ أصفر باهت + حركة */
+      /* ✅ أصفر باهت أوضح + عليه الحركة */
       --hexPale:   rgba(255, 215, 80, .68);
 
+      /* حد خفيف جداً يعطي تطابق بصري أفضل */
       --hexBorder: rgba(0,0,0,.10);
     }
 
@@ -64,8 +65,6 @@
       width:min(92vw, 760px);
       transform:scale(var(--zoom, 1));
       transform-origin:center top;
-      /* ✅ نضبطها بالجافاسكربت حتى ما تغطي الأزرار */
-      margin-bottom: var(--zoomMB, 0px);
     }
     .mapBox{
       position:relative;
@@ -96,13 +95,13 @@
       stroke-width: 1;
     }
 
-    /* ✅ الحالات */
-    .overlaySvg .state0{ fill: rgba(0,0,0,0.001); }
-    .overlaySvg .state1{ fill: var(--hexPale); }
-    .overlaySvg .state2{ fill: var(--hexGreen); }
-    .overlaySvg .state3{ fill: var(--hexOrange); }
+    /* ✅ الحالات (المطلوبة) */
+    .overlaySvg .state0{ fill: rgba(0,0,0,0.001); }        /* قابل للنقر بدون ما يبان */
+    .overlaySvg .state1{ fill: var(--hexPale); }           /* أصفر باهت */
+    .overlaySvg .state2{ fill: var(--hexGreen); }          /* أخضر */
+    .overlaySvg .state3{ fill: var(--hexOrange); }         /* برتقالي */
 
-    /* ✅ حركة تكرارية فقط للأصفر */
+    /* ✅ حركة تكرارية فقط للأصفر الباهت */
     @keyframes palePulse {
       0%   { opacity: 1; }
       50%  { opacity: .35; }
@@ -173,39 +172,36 @@
       appId: "1:1053646928152:web:032d50148c3a4f1148066d"
     };
 
-    // ✅ MAPS كما عندك (بدون نظام الخلايا للأسئلة — الأسئلة حسب الحرف فقط)
+    // ✅ (كما هو عندك)
     const MAPS = [
-      // map1
       [
-        ["ر","ب","أ","ج","ذ"],
-        ["س","ل","ز","ح","ي"],
-        ["ع","ض","ق","ظ","ث"],
-        ["غ","ط","د","ن","ص"],
-        ["و","م","هـ","خ","ك"]
+        ["ذ","ج","أ","ب","ر"],
+        ["ي","ح","ز","ل","س"],
+        ["ث","ظ","ق","ض","ع"],
+        ["ص","ن","د","ط","غ"],
+        ["ك","خ","هـ","م","و"]
       ],
-      // map2
       [
-        ["ه","د","ث","أ","ش"],
-        ["ك","ن","ض","ح","ي"],
-        ["ع","ر","ق","ظ","غ"],
-        ["و","ط","س","ز","ص"],
-        ["ج","م","ب","ل","ذ"]
+        ["ش","أ","ث","د","هـ"],
+        ["ي","ح","ض","ن","ك"],
+        ["غ","ظ","ق","ر","ع"],
+        ["ص","ز","س","ط","و"],
+        ["ذ","ل","ب","م","ج"]
       ],
-      // map3
       [
-        ["ب","د","و","ص","ق"],
-        ["ث","ه","ض","ي","ح"],
-        ["م","ز","ش","ط","ك"],
-        ["ث","ظ","س","ر","أ"],
-        ["ج","ع","هـ","غ","ذ"]
+        ["ق","ص","و","د","ب"],
+        ["ح","ي","ض","هـ","ث"],
+        ["ك","ط","ش","ز","م"],
+        ["أ","ر","س","ظ","ث"],
+        ["ذ","غ","هـ","ع","ج"]
       ]
     ];
 
-    // ✅ هيكل الأسئلة: 25 سؤال لكل حرف (بدون محتوى الآن)
+    // أسئلة مؤقتة (هيكل فقط)
     const QUESTIONS = {};
     const ALL_LETTERS = Array.from(new Set(MAPS.flat(2)));
     for(const L of ALL_LETTERS){
-      QUESTIONS[L] = Array.from({length:25}, () => ({ q:`سؤال بحرف ${L}`, a:"", level:"" }));
+      QUESTIONS[L] = Array.from({length:25}, (_,i) => `سؤال بحرف ${L}`);
     }
 
     const app = initializeApp(firebaseConfig);
@@ -239,8 +235,7 @@
 
     function cellKey(row,col){ return `${row}-${col}`; }
 
-    // اكتشاف حدود كتلة السداسيات من نفس الصورة
-    const BBOX_CACHE = {}; // key = imgSrc
+    const BBOX_CACHE = {};
 
     function detectHexBBox(img){
       const nw = img.naturalWidth, nh = img.naturalHeight;
@@ -301,7 +296,6 @@
       if(st === 1) el.classList.add("pulse");
     }
 
-    // Pointy-Top سداسي
     function hexPointsPointyTop(x, y, w, h){
       const pts = [
         [x + w/2, y],
@@ -370,7 +364,6 @@
           activeMap: 0,
           freeze: false,
           buzzer: null,
-          zoom: 1,  // ✅ قيمة ابتدائية للزوم (تثبت لاحقاً)
           current: { letter: null, qIndex: 0, row: null, col: null, map: 0 }
         });
       });
@@ -393,7 +386,7 @@
         </div>
 
         <div class="mapOuter">
-          <div id="mapScale" class="mapScale" style="--zoom:1;--zoomMB:0px">
+          <div id="mapScale" class="mapScale" style="--zoom:1">
             <div id="mapBox" class="mapBox">
               <img id="mapImg" src="" alt="">
               <svg id="overlay" class="overlaySvg"></svg>
@@ -441,38 +434,18 @@
       const mapImg = document.getElementById("mapImg");
       const overlay = document.getElementById("overlay");
       const mapScale = document.getElementById("mapScale");
-      const mapBox = document.getElementById("mapBox");
       const zoom = document.getElementById("zoom");
 
       const activeMap = Number(room.activeMap || 0);
 
-      // ✅ الخرائط من GitHub (بالترتيب map1 ثم map2 ثم map3)
       const src = ([
-        "https://raw.githubusercontent.com/ffaahhad1999-wq/sabaq-alhorof/main/maps/map1.jpeg",
-        "https://raw.githubusercontent.com/ffaahhad1999-wq/sabaq-alhorof/main/maps/map2.jpeg",
-        "https://raw.githubusercontent.com/ffaahhad1999-wq/sabaq-alhorof/main/maps/map3.jpeg"
-      ][activeMap]);
+        "maps/map1.jpeg",
+        "maps/map2.jpeg",
+        "maps/map3.jpeg"
+      ][activeMap] || "maps/map1.jpeg");
 
       mapImg.src = src;
 
-      // ✅ تطبيق الزوم + حجز مساحة تحت الخريطة حتى لا تغطي الأزرار
-      function applyZoom(z){
-        const zv = Math.max(0.8, Math.min(1.35, Number(z) || 1));
-        mapScale.style.setProperty("--zoom", String(zv));
-
-        requestAnimationFrame(() => {
-          const baseH = mapBox?.offsetHeight || 0;
-          const extra = Math.max(0, (zv - 1) * baseH);
-          mapScale.style.setProperty("--zoomMB", `${extra}px`);
-        });
-      }
-
-      // ✅ تثبيت زوم المقدم/الغرفة (حتى عند الضغط على الخلايا وإعادة الرندر)
-      const savedZoom = Number(room.zoom ?? 1);
-      zoom.value = String(savedZoom);
-      applyZoom(savedZoom);
-
-      // بناء 25 سداسي
       overlay.innerHTML = "";
       overlay.setAttribute("xmlns", "http://www.w3.org/2000/svg");
 
@@ -525,21 +498,14 @@
 
       function onMapReady(){
         if(!BBOX_CACHE[src]) BBOX_CACHE[src] = detectHexBBox(mapImg);
-        requestAnimationFrame(() => {
-          placeHexes();
-          applyZoom(Number(zoom.value || 1));
-        });
+        requestAnimationFrame(placeHexes);
       }
 
       if(mapImg.complete) onMapReady();
       else mapImg.addEventListener("load", onMapReady, { once:true });
 
-      window.addEventListener("resize", () => {
-        placeHexes();
-        applyZoom(Number(zoom.value || 1));
-      });
+      window.addEventListener("resize", placeHexes);
 
-      // حالات التلوين
       const mapStates = (room.mapStates && room.mapStates[String(activeMap)]) ? room.mapStates[String(activeMap)] : {};
       overlay.querySelectorAll(".cell").forEach(cell => {
         const r = Number(cell.getAttribute("data-row"));
@@ -549,7 +515,6 @@
         setStateClass(cell, st);
       });
 
-      // اسم أول ضاغط
       const buzzBox = document.getElementById("buzzBox");
       const buzzer = room.buzzer;
 
@@ -563,29 +528,22 @@
         buzzBox.textContent = "—";
       }
 
-      // ✅ سؤال المقدم (حسب الحرف فقط)
       if(isHost){
         const qText = document.getElementById("qText");
         const cur = room.current || {};
         if(cur.letter){
           const list = QUESTIONS[cur.letter] || [];
           const idx = Number(cur.qIndex || 0) % Math.max(list.length,1);
-          qText.textContent = list.length ? (list[idx].q || "") : `لا يوجد سؤال لحرف ${cur.letter}`;
+          qText.textContent = list.length ? list[idx] : `لا يوجد سؤال لحرف ${cur.letter}`;
         }else{
           qText.textContent = "اختر حرفًا من الخريطة";
         }
       }
 
-      // ✅ زوم: يطبّق فوراً + (المقدم فقط) يحفظه في الغرفة
-      zoom.addEventListener("input", async () => {
-        const zv = Number(zoom.value || 1);
-        applyZoom(zv);
-        if(isHost){
-          await update(roomRef, { zoom: zv });
-        }
+      zoom.addEventListener("input", () => {
+        mapScale.style.setProperty("--zoom", zoom.value);
       });
 
-      // تغيير الخريطة
       const mapBtn = document.getElementById("mapBtn");
       if(mapBtn){
         mapBtn.addEventListener("click", async () => {
@@ -598,7 +556,6 @@
         });
       }
 
-      // تجميد اللاعبين + يمسح اسم الضاغط
       const freezeBtn = document.getElementById("freezeBtn");
       if(freezeBtn){
         freezeBtn.addEventListener("click", async () => {
@@ -606,7 +563,6 @@
         });
       }
 
-      // تغيير السؤال
       const nextQ = document.getElementById("nextQ");
       if(nextQ){
         nextQ.addEventListener("click", async () => {
@@ -619,7 +575,7 @@
         });
       }
 
-      // كليك المقدم على السداسي: يلوّن + يحدد حرف + يمسح البازر
+      // ✅✅✅ التعديل الوحيد هنا: منع undefined حتى لا يفشل update
       if(isHost){
         overlay.querySelectorAll(".cell").forEach(cell => {
           cell.addEventListener("click", async (e) => {
@@ -633,7 +589,11 @@
             const st = Number(mapStates?.[k] ?? 0);
             const next = (st + 1) % 4;
 
-            const letter = MAPS[activeMap][r][c];
+            // بدل ما يصير undefined (ويفشل Firebase) نخليه حرف أو null فقط
+            const letter =
+              (MAPS?.[activeMap]?.[r]?.[c] !== undefined && MAPS?.[activeMap]?.[r]?.[c] !== null)
+                ? MAPS[activeMap][r][c]
+                : null;
 
             const updates = {};
             updates[`rooms/${code}/mapStates/${activeMap}/${k}`] = next;
@@ -645,7 +605,6 @@
         });
       }
 
-      // زر اللاعب الكبير
       const buzzBtn = document.getElementById("buzzBtn");
       if(buzzBtn){
         const disabled = (!started) || room.freeze || !me || !me.name;
@@ -667,7 +626,6 @@
       }
     }
 
-    // مراقبة الغرفة
     onValue(roomRef, (snap) => {
       if(!snap.exists()){
         main.textContent = "اللعبة غير موجودة (رمز غير صحيح).";
