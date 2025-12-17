@@ -35,7 +35,10 @@
 
     .card{
       background:var(--card);color:var(--text);
-      width:100%;margin:12px auto;padding:12px;border-radius:12px;
+      width:100%;
+      margin:12px auto;
+      padding:16px; /* ✅ تكبير المربع الأبيض الكبير */
+      border-radius:12px;
       box-sizing:border-box
     }
 
@@ -148,7 +151,8 @@
 </head>
 <body>
   <header>
-    <img class="logo" src="" alt="">
+    <!-- ✅ اللوجو: افتراضي logo.png + سيتم عمل fallback بالـ JS -->
+    <img id="logoEl" class="logo" src="logo.png" alt="logo">
     <div id="gameName" class="gameName"></div>
     <h1>سباق الحروف</h1>
   </header>
@@ -197,32 +201,22 @@
     ];
 
     /* =========================================================
-       ✅✅✅ جزء الأسئلة فقط (هنا مكان إدخال المحتوى)
-       - أدخل أسئلة/أجوبة كل حرف داخل QUESTIONS_CONTENT
-       - النظام يضمن 25 لكل حرف (يكمل فراغات إذا نقص / يقص إذا زاد)
-       - المقدم يرى السؤال فقط بدون أرقام
+       ✅✅✅ جزء الأسئلة فقط (مكان إدخال المحتوى)
     ========================================================= */
-
-    // 1) ضع محتوى الأسئلة هنا فقط:
-    // ملاحظة: لا تكتب إلا الحروف الموجودة في الخرائط.
-    // كل عنصر: { q: "نص السؤال", a: "نص الإجابة" }
     const QUESTIONS_CONTENT = {
-      // مثال (امسحه إذا تبي):
       // "أ": [
-      //   { q: "عاصمة المملكة العربية السعودية؟", a: "الرياض" }
+      //   { q: "سؤال ...", a: "إجابة ..." }
       // ]
     };
 
-    // 2) تنظيف النصوص (عشان ما يطلع تشويه بالحروف/التشكيل)
     function cleanArabicText(s){
       return String(s ?? "")
-        .replace(/[\u064B-\u065F\u0670\u06D6-\u06ED]/g, "")  // حركات/تشكيل
-        .replace(/\u0640/g, "")                              // تطويل
-        .replace(/[^\S\r\n]+/g, " ")                         // توحيد مسافات
+        .replace(/[\u064B-\u065F\u0670\u06D6-\u06ED]/g, "")
+        .replace(/\u0640/g, "")
+        .replace(/[^\S\r\n]+/g, " ")
         .trim();
     }
 
-    // 3) بناء النظام النهائي: 25 سؤال/جواب لكل حرف في الخرائط فقط
     const QUESTIONS = {};
     const ALL_LETTERS = Array.from(new Set(MAPS.flat(2)));
 
@@ -233,13 +227,9 @@
     function buildQuestionsForLetter(letter, count = 25){
       const base = createEmptyQuestionsForLetter(count);
       const src = Array.isArray(QUESTIONS_CONTENT?.[letter]) ? QUESTIONS_CONTENT[letter] : [];
-
       for(let i=0; i<Math.min(count, src.length); i++){
         const item = src[i] || {};
-        base[i] = {
-          q: cleanArabicText(item.q),
-          a: cleanArabicText(item.a)
-        };
+        base[i] = { q: cleanArabicText(item.q), a: cleanArabicText(item.a) };
       }
       return base;
     }
@@ -248,7 +238,6 @@
       QUESTIONS[L] = buildQuestionsForLetter(L, 25);
     }
 
-    // ✅ عشوائية تلقائية (بدون زر) وترتيب ثابت داخل الغرفة لكل حرف
     function fnv1a32(str){
       let h = 0x811c9dc5;
       for(let i=0;i<str.length;i++){
@@ -284,10 +273,7 @@
       const seed = (base ^ mix) >>> 0;
       return shuffledOrder(total, seed);
     }
-
-    /* =========================================================
-       ✅ نهاية جزء الأسئلة فقط
-    ========================================================= */
+    /* ========================================================= */
 
     const app = initializeApp(firebaseConfig);
     const db = getDatabase(app);
@@ -300,6 +286,7 @@
 
     const main = document.getElementById("main");
     const gameNameEl = document.getElementById("gameName");
+    const logoEl = document.getElementById("logoEl");
 
     if(!role || !code){
       main.textContent = "بيانات الدخول غير مكتملة.";
@@ -482,7 +469,9 @@
           </div>
         </div>
 
-        <div style="height:10px"></div>
+        <!-- ✅ Spacer ديناميكي يمنع تغطية الأزرار عند التكبير -->
+        <div id="mapSpacer" style="height:14px"></div>
+
         <div class="row" style="justify-content:space-between">
           <div class="row">
             ${isHost ? `<button id="mapBtn" class="btn btnYellow">تغيير الخريطة</button>` : ""}
@@ -491,7 +480,8 @@
           </div>
         </div>
 
-        <div style="height:10px"></div>
+        <div style="height:12px"></div>
+
         <div class="below">
           <div class="buzzRow" style="flex:1;min-width:260px">
             <div id="buzzBox" class="buzzBox buzzEmpty">—</div>
@@ -523,6 +513,7 @@
       const overlay = document.getElementById("overlay");
       const mapScale = document.getElementById("mapScale");
       const zoom = document.getElementById("zoom");
+      const mapSpacer = document.getElementById("mapSpacer");
 
       const activeMap = Number(room.activeMap || 0);
 
@@ -550,6 +541,13 @@
       }
 
       overlay.style.pointerEvents = isHost ? "auto" : "none";
+
+      function updateMapSpacer(){
+        const z = Number(zoom?.value || 1);
+        const imgH = mapImg?.clientHeight || 0;
+        const extra = Math.max(0, (z - 1) * imgH);
+        mapSpacer.style.height = `${Math.round(14 + extra)}px`;
+      }
 
       function placeHexes(){
         const W = mapImg.clientWidth;
@@ -587,13 +585,19 @@
 
       function onMapReady(){
         if(!BBOX_CACHE[src]) BBOX_CACHE[src] = detectHexBBox(mapImg);
-        requestAnimationFrame(placeHexes);
+        requestAnimationFrame(() => {
+          placeHexes();
+          updateMapSpacer();
+        });
       }
 
       if(mapImg.complete) onMapReady();
       else mapImg.addEventListener("load", onMapReady, { once:true });
 
-      window.addEventListener("resize", placeHexes);
+      window.addEventListener("resize", () => {
+        placeHexes();
+        updateMapSpacer();
+      });
 
       // حالات التلوين
       const mapStates = (room.mapStates && room.mapStates[String(activeMap)]) ? room.mapStates[String(activeMap)] : {};
@@ -644,6 +648,7 @@
       // زوم
       zoom.addEventListener("input", () => {
         mapScale.style.setProperty("--zoom", zoom.value);
+        updateMapSpacer();
       });
 
       // تغيير الخريطة
@@ -740,6 +745,11 @@
       }
       const room = snap.val();
       gameNameEl.textContent = room?.name ? room.name : "";
+
+      // ✅ تفعيل اللوجو (Fallback)
+      // إذا عندك رابط محفوظ في room.logoUrl أو room.logo أو localStorage.logoUrl
+      const possible = room?.logoUrl || room?.logo || localStorage.getItem("logoUrl") || "logo.png";
+      if(possible) logoEl.src = possible;
 
       if(role === "host"){
         if(!hostKey || hostKey !== room.presenterKey){
