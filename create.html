@@ -10,45 +10,43 @@
       --yellow:#f4c400;
       --card:#ffffff;
       --text:#111;
-      --muted:#666;
     }
     body{margin:0;background:var(--bg);font-family:Arial, sans-serif;color:#fff;text-align:center}
-    header{position:relative;padding:18px 16px 0}
-    .logo{position:absolute;left:14px;top:14px;width:44px;height:44px;object-fit:contain}
-    h2{margin:18px 0 16px;font-size:26px}
-    .card{
-      background:var(--card);color:var(--text);
-      width:92%;max-width:520px;margin:18px auto;padding:16px;border-radius:12px;
-      box-sizing:border-box
+    header{position:relative;padding:30px 16px 0}
+    .logo{
+      position:absolute;left:14px;top:14px;
+      width:86px;height:86px;object-fit:contain;
+      pointer-events:none;
     }
-    input, select{
-      width:100%;padding:12px;margin:10px 0;font-size:16px;box-sizing:border-box;
-      border-radius:10px;border:1px solid #ddd
+    h1{margin:18px 0 14px;color:var(--yellow);font-size:28px}
+    .wrap{width:92%;max-width:520px;margin:0 auto}
+    .card{background:var(--card);color:var(--text);border-radius:12px;padding:14px}
+    input{
+      width:100%;box-sizing:border-box;
+      padding:14px;margin:10px 0;
+      font-size:16px;border-radius:10px;border:0;
     }
-    .btn{
-      width:100%;padding:14px;margin-top:8px;font-size:18px;border:none;border-radius:12px;
-      background:var(--yellow);cursor:pointer;color:#000
+    button{
+      width:100%;padding:16px;margin-top:10px;
+      font-size:18px;border:none;border-radius:12px;cursor:pointer;
+      background:var(--yellow);color:#000
     }
-    .sub{margin-top:10px;font-size:13px;color:var(--muted)}
-    .err{margin-top:10px;color:#b00020;font-size:14px;display:none}
+    .hint{font-size:13px;opacity:.9;margin-top:8px}
   </style>
 </head>
 <body>
   <header>
-    <img class="logo" src="" alt="">
-    <h2>إنشاء لعبة</h2>
+    <img class="logo" src="logo.png" alt="شعار صندوق المسابقات">
+    <h1>إنشاء لعبة</h1>
   </header>
 
-  <div class="card">
-    <input id="gameName" placeholder="اسم اللعبة" />
-    <select id="playersMax">
-      <option value="1">1</option><option value="2">2</option><option value="3">3</option><option value="4">4</option>
-      <option value="5">5</option><option value="6">6</option><option value="7">7</option><option value="8">8</option>
-      <option value="9">9</option><option value="10">10</option>
-    </select>
-    <button id="btnCreate" class="btn">إنشاء</button>
-    <div class="sub">بعد الإنشاء سيظهر رمز مكوّن من 6 أرقام لمشاركته مع اللاعبين</div>
-    <div id="err" class="err"></div>
+  <div class="wrap">
+    <div class="card">
+      <input id="name" placeholder="اسم اللعبة">
+      <input id="players" inputmode="numeric" placeholder="عدد اللاعبين (1 إلى 10)">
+      <button id="btn">إنشاء</button>
+      <div class="hint">تقدر تكتب الأرقام عربي أو إنجليزي</div>
+    </div>
   </div>
 
   <script type="module">
@@ -68,58 +66,62 @@
     const app = initializeApp(firebaseConfig);
     const db = getDatabase(app);
 
-    const errBox = document.getElementById("err");
-    function showErr(msg){
-      errBox.style.display="block";
-      errBox.textContent = msg;
+    function normalizeDigits(str){
+      const map = {"٠":"0","١":"1","٢":"2","٣":"3","٤":"4","٥":"5","٦":"6","٧":"7","٨":"8","٩":"9"};
+      return String(str ?? "").trim().replace(/[٠-٩]/g, d => map[d]);
     }
 
-    function randKey(){
-      return (Math.random().toString(36).slice(2) + Date.now().toString(36));
+    function random6(){
+      return String(Math.floor(100000 + Math.random()*900000));
+    }
+    function randomKey(){
+      return Math.random().toString(36).slice(2) + Math.random().toString(36).slice(2);
     }
 
-    async function generateUniqueCode(){
-      for(let i=0;i<30;i++){
-        const code = String(Math.floor(Math.random()*1000000)).padStart(6,"0");
-        const snap = await get(ref(db, `rooms/${code}`));
-        if(!snap.exists()) return code;
+    async function createRoom(){
+      const name = document.getElementById("name").value.trim();
+      const pRaw = document.getElementById("players").value;
+      const players = Number(normalizeDigits(pRaw));
+
+      if(!name){ alert("اكتب اسم اللعبة"); return; }
+      if(!Number.isFinite(players) || players < 1 || players > 10){ alert("عدد اللاعبين لازم من 1 إلى 10"); return; }
+
+      document.getElementById("btn").disabled = true;
+
+      let code = "";
+      for(let i=0;i<10;i++){
+        const c = random6();
+        const exists = (await get(ref(db, `rooms/${c}`))).exists();
+        if(!exists){ code = c; break; }
       }
-      throw new Error("تعذر إنشاء رمز جديد. أعد المحاولة.");
+      if(!code){
+        document.getElementById("btn").disabled = false;
+        alert("حاول مرة ثانية");
+        return;
+      }
+
+      const presenterKey = randomKey();
+
+      const room = {
+        code,
+        name,
+        maxPlayers: players,
+        presenterKey,
+        status: "lobby",
+        createdAt: Date.now(),
+        activeMap: 0,
+        freeze: false,
+        buzzer: null,
+        current: { letter: null, qIndex: 0, row: null, col: null, map: 0 },
+        players: {}
+      };
+
+      await set(ref(db, `rooms/${code}`), room);
+
+      location.href = `game.html?role=host&code=${encodeURIComponent(code)}&key=${encodeURIComponent(presenterKey)}`;
     }
 
-    document.getElementById("btnCreate").addEventListener("click", async () => {
-      errBox.style.display="none";
-      const name = document.getElementById("gameName").value.trim();
-      const playersMax = Number(document.getElementById("playersMax").value);
-
-      if(!name) return showErr("اكتب اسم اللعبة");
-      if(!Number.isFinite(playersMax) || playersMax < 1 || playersMax > 10) return showErr("عدد اللاعبين غير صحيح");
-
-      try{
-        const code = await generateUniqueCode();
-        const hostKey = randKey();
-
-        const room = {
-          code,
-          name,
-          playersMax,
-          status: "lobby",
-          createdAt: Date.now(),
-          activeMap: 0,
-          freeze: false,
-          buzzer: null,
-          current: { letter: null, qIndex: 0, row: null, col: null, map: 0 },
-          presenterKey: hostKey,
-          players: {}
-        };
-
-        await set(ref(db, `rooms/${code}`), room);
-
-        location.href = `game.html?role=host&code=${encodeURIComponent(code)}&key=${encodeURIComponent(hostKey)}`;
-      }catch(e){
-        showErr(e?.message || "صار خطأ غير متوقع");
-      }
-    });
+    document.getElementById("btn").addEventListener("click", createRoom);
   </script>
 </body>
 </html>
