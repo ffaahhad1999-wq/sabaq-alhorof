@@ -10,46 +10,48 @@
       --yellow:#f4c400;
       --card:#ffffff;
       --text:#111;
-      --muted:#666;
     }
     body{margin:0;background:var(--bg);font-family:Arial, sans-serif;color:#fff;text-align:center}
-    header{position:relative;padding:18px 16px 0}
-    .logo{position:absolute;left:14px;top:14px;width:44px;height:44px;object-fit:contain}
-    h2{margin:18px 0 16px;font-size:26px}
-    .card{
-      background:var(--card);color:var(--text);
-      width:92%;max-width:520px;margin:18px auto;padding:16px;border-radius:12px;
-      box-sizing:border-box
+    header{position:relative;padding:30px 16px 0}
+    .logo{
+      position:absolute;left:14px;top:14px;
+      width:86px;height:86px;object-fit:contain;
+      pointer-events:none;
     }
+    h1{margin:18px 0 14px;color:var(--yellow);font-size:28px}
+    .wrap{width:92%;max-width:520px;margin:0 auto}
+    .card{background:var(--card);color:var(--text);border-radius:12px;padding:14px}
     input{
-      width:100%;padding:12px;margin:10px 0;font-size:16px;box-sizing:border-box;
-      border-radius:10px;border:1px solid #ddd
+      width:100%;box-sizing:border-box;
+      padding:14px;margin:10px 0;
+      font-size:16px;border-radius:10px;border:0;
     }
-    .btn{
-      width:100%;padding:14px;margin-top:8px;font-size:18px;border:none;border-radius:12px;
-      background:var(--yellow);cursor:pointer;color:#000
+    button{
+      width:100%;padding:16px;margin-top:10px;
+      font-size:18px;border:none;border-radius:12px;cursor:pointer;
+      background:var(--yellow);color:#000
     }
-    .sub{margin-top:10px;font-size:13px;color:var(--muted)}
-    .err{margin-top:10px;color:#b00020;font-size:14px;display:none}
+    .hint{font-size:13px;opacity:.9;margin-top:8px}
   </style>
 </head>
 <body>
   <header>
-    <img class="logo" src="" alt="">
-    <h2>الدخول إلى لعبة</h2>
+    <img class="logo" src="logo.png" alt="شعار صندوق المسابقات">
+    <h1>الدخول إلى لعبة</h1>
   </header>
 
-  <div class="card">
-    <input id="playerName" placeholder="اسم اللاعب" />
-    <input id="code" inputmode="numeric" placeholder="رمز اللعبة (6 أرقام)" />
-    <button id="btnJoin" class="btn">دخول</button>
-    <div class="sub">اكتب الرمز كما أرسله لك المقدم</div>
-    <div id="err" class="err"></div>
+  <div class="wrap">
+    <div class="card">
+      <input id="playerName" placeholder="اسم اللاعب">
+      <input id="code" inputmode="numeric" placeholder="اكتب رمز اللعبة (6 أرقام)">
+      <button id="btn">دخول</button>
+      <div class="hint">تقدر تكتب الأرقام عربي أو إنجليزي</div>
+    </div>
   </div>
 
   <script type="module">
     import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.5/firebase-app.js";
-    import { getDatabase, ref, get, update } from "https://www.gstatic.com/firebasejs/10.12.5/firebase-database.js";
+    import { getDatabase, ref, get, set, update } from "https://www.gstatic.com/firebasejs/10.12.5/firebase-database.js";
 
     const firebaseConfig = {
       apiKey: "AIzaSyDy2FEg8Xj0pA05syDawTh37rI1NEbQTjQ",
@@ -64,52 +66,50 @@
     const app = initializeApp(firebaseConfig);
     const db = getDatabase(app);
 
-    const errBox = document.getElementById("err");
-    function showErr(msg){
-      errBox.style.display="block";
-      errBox.textContent = msg;
-    }
-
     function normalizeDigits(str){
-      const map = { "٠":"0","١":"1","٢":"2","٣":"3","٤":"4","٥":"5","٦":"6","٧":"7","٨":"8","٩":"9" };
-      return String(str || "").trim().replace(/[٠-٩]/g, d => map[d]);
+      const map = {"٠":"0","١":"1","٢":"2","٣":"3","٤":"4","٥":"5","٦":"6","٧":"7","٨":"8","٩":"9"};
+      return String(str ?? "").trim().replace(/[٠-٩]/g, d => map[d]);
+    }
+    function randomId(){
+      return Math.random().toString(36).slice(2) + Math.random().toString(36).slice(2);
     }
 
-    function randId(){
-      return (Math.random().toString(36).slice(2) + Date.now().toString(36));
-    }
-
-    document.getElementById("btnJoin").addEventListener("click", async () => {
-      errBox.style.display="none";
+    async function joinRoom(){
       const name = document.getElementById("playerName").value.trim();
       const code = normalizeDigits(document.getElementById("code").value);
 
-      if(!name) return showErr("اكتب اسم اللاعب");
-      if(!/^\d{6}$/.test(code)) return showErr("اكتب رمز صحيح مكوّن من 6 أرقام");
+      if(!name){ alert("اكتب اسم اللاعب"); return; }
+      if(!/^\d{6}$/.test(code)){ alert("رمز اللعبة لازم 6 أرقام"); return; }
+
+      document.getElementById("btn").disabled = true;
 
       const roomSnap = await get(ref(db, `rooms/${code}`));
-      if(!roomSnap.exists()) return showErr("اللعبة غير موجودة (رمز غير صحيح).");
+      if(!roomSnap.exists()){
+        document.getElementById("btn").disabled = false;
+        alert("رمز اللعبة غير صحيح");
+        return;
+      }
 
       const room = roomSnap.val();
-      if(room.status !== "lobby" && room.status !== "started") return showErr("هذه اللعبة غير متاحة.");
+      const playersObj = room.players || {};
+      const list = Object.values(playersObj);
 
-      const players = room.players || {};
-      const list = Object.values(players);
-
-      // اختيار فريق تلقائي: الأقل عددًا
       const greenCount = list.filter(p => p.team === "green").length;
       const orangeCount = list.filter(p => p.team === "orange").length;
       const team = (greenCount <= orangeCount) ? "green" : "orange";
 
-      const pid = randId();
-      const playerData = { name, team, joinedAt: Date.now() };
+      const pid = randomId();
 
-      await update(ref(db), {
-        [`rooms/${code}/players/${pid}`]: playerData
+      await set(ref(db, `rooms/${code}/players/${pid}`), {
+        name,
+        team,
+        joinedAt: Date.now()
       });
 
       location.href = `game.html?role=player&code=${encodeURIComponent(code)}&pid=${encodeURIComponent(pid)}`;
-    });
+    }
+
+    document.getElementById("btn").addEventListener("click", joinRoom);
   </script>
 </body>
 </html>
