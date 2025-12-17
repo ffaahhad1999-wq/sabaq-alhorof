@@ -51,6 +51,7 @@
       padding:8px;border-radius:10px;margin:6px 0;cursor:pointer
     }
 
+    /* MAP */
     .mapOuter{width:100%;display:flex;justify-content:center}
     .mapScale{
       width:min(92vw, 760px);
@@ -67,6 +68,7 @@
     }
     .mapBox img{width:100%;height:100%;object-fit:cover;display:block}
     .overlay{position:absolute;inset:0;pointer-events:none}
+
     .hexBtn{
       position:absolute;
       border:none;
@@ -82,9 +84,9 @@
       pointer-events:auto;
     }
     .hexState0{background:transparent}
-    .hexState1{background:rgba(243,231,166,.75)}
-    .hexState2{background:rgba(26,163,74,.55)}
-    .hexState3{background:rgba(242,140,0,.55)}
+    .hexState1{background:rgba(243,231,166,.78)}
+    .hexState2{background:rgba(26,163,74,.58)}
+    .hexState3{background:rgba(242,140,0,.58)}
 
     .below{
       display:flex;gap:10px;flex-wrap:wrap;justify-content:center;align-items:stretch
@@ -121,7 +123,8 @@
 </head>
 <body>
   <header>
-    <img class="logo" src="" alt="">
+    <!-- إذا عندك شعار، سمّه logo.png وحطه بجانب الملفات -->
+    <img class="logo" src="logo.png" alt="">
     <div id="gameName" class="gameName"></div>
     <h1>سباق الحروف</h1>
   </header>
@@ -144,6 +147,9 @@
       messagingSenderId: "1053646928152",
       appId: "1:1053646928152:web:032d50148c3a4f1148066d"
     };
+
+    // صور الخرائط (عندك داخل مجلد maps وبالامتداد jpeg)
+    const MAP_IMG = ["maps/map1.jpeg","maps/map2.jpeg","maps/map3.jpeg"];
 
     const MAPS = [
       [
@@ -202,55 +208,61 @@
     function teamColor(team){
       return team === "green" ? "rgba(26,163,74,.9)" : "rgba(242,140,0,.9)";
     }
+
     function escapeHtml(s){
       return String(s ?? "").replace(/[&<>"']/g, c => ({
         "&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#039;"
       }[c]));
     }
 
+    function cellKey(row,col){ return `${row}-${col}`; }
+
+    /**
+     * FIX: تم ضبط مواقع السداسيات داخل "منطقة الشبكة" الفعلية داخل الصورة
+     * لأن الصورة فيها إطار أخضر/برتقالي حول الشبكة.
+     */
     function layoutHexes(container){
       const W = container.clientWidth;
       const H = container.clientHeight;
 
-      const w = W * 0.105;
-      const h = w * 1.155;
+      // منطقة الشبكة داخل الصورة (جرّبت قيم تعطي تطابق أدق مع خرائطك)
+      const x0 = W * 0.145;
+      const x1 = W * 0.855;
+      const y0 = H * 0.085;
+      const y1 = H * 0.915;
+
+      const innerW = (x1 - x0);
+      const innerH = (y1 - y0);
+
+      // عندنا 5 صفوف. ارتفاع الشبكة تقريبًا = 4h (لأن stepY=0.75h)
+      const h = innerH / 4;
+      const w = h / 1.155;
       const stepY = h * 0.75;
 
-      const gridW = (5.5 * w);
-      const gridH = (4 * h);
+      const gridW = 5*w + (w/2); // 5 أعمدة + إزاحة نصف عمود للصفوف الفردية
+      const gridH = 4*h;
 
-      const marginX = (W - gridW) / 2;
-      const marginY = (H - gridH) / 2;
+      const marginX = x0 + (innerW - gridW) / 2;
+      const marginY = y0 + (innerH - gridH) / 2;
+
+      // تكبير بسيط عشان اللون يغطي نفس حدود السداسي في الصورة
+      const boost = 1.035;
 
       const pos = [];
       for(let row=0; row<5; row++){
         for(let col=0; col<5; col++){
-          const left = marginX + col*w + (row%2)*(w/2);
-          const top = marginY + row*stepY;
-          pos.push({row,col,left,top,width:w,height:h});
+          const baseLeft = marginX + col*w + (row%2)*(w/2);
+          const baseTop  = marginY + row*stepY;
+
+          const bw = w*boost;
+          const bh = h*boost;
+          const left = baseLeft - (bw - w)/2;
+          const top  = baseTop  - (bh - h)/2;
+
+          pos.push({row,col,left,top,width:bw,height:bh});
         }
       }
       return pos;
-    }
-    function cellKey(row,col){ return `${row}-${col}`; }
-
-    // ✅ مهم: تحميل صورة الخريطة من maps مع دعم jpeg/jpg/png
-    function setMapImage(mapImg, mapIndex){
-      const base = `maps/map${mapIndex+1}`;
-      const exts = [".jpg", ".jpeg", ".png"];
-      let i = 0;
-
-      mapImg.onerror = () => {
-        i++;
-        if(i >= exts.length){
-          mapImg.onerror = null;
-          mapImg.alt = "لم يتم العثور على صورة الخريطة";
-          return;
-        }
-        mapImg.src = base + exts[i];
-      };
-
-      mapImg.src = base + exts[i];
     }
 
     function renderHostLobby(room){
@@ -382,9 +394,7 @@
       const zoom = document.getElementById("zoom");
 
       const activeMap = Number(room.activeMap || 0);
-
-      // ✅ هنا الإصلاح الحقيقي
-      setMapImage(mapImg, activeMap);
+      mapImg.src = MAP_IMG[activeMap] || MAP_IMG[0];
 
       overlay.innerHTML = "";
       for(let row=0; row<5; row++){
@@ -399,7 +409,11 @@
         }
       }
 
-      overlay.style.pointerEvents = isHost ? "auto" : "none";
+      if(!isHost){
+        overlay.style.pointerEvents = "none";
+      }else{
+        overlay.style.pointerEvents = "auto";
+      }
 
       function placeHexes(){
         const pos = layoutHexes(mapBox);
@@ -500,12 +514,12 @@
 
             const letter = MAPS[activeMap][r][c];
 
-            const updates = {};
-            updates[`rooms/${code}/mapStates/${activeMap}/${k}`] = next;
-            updates[`rooms/${code}/buzzer`] = null;
-            updates[`rooms/${code}/current`] = { letter, qIndex: 0, row: r, col: c, map: activeMap };
+            const updatesObj = {};
+            updatesObj[`rooms/${code}/mapStates/${activeMap}/${k}`] = next;
+            updatesObj[`rooms/${code}/buzzer`] = null;
+            updatesObj[`rooms/${code}/current`] = { letter, qIndex: 0, row: r, col: c, map: activeMap };
 
-            await update(ref(db), updates);
+            await update(ref(db), updatesObj);
           });
         });
       }
