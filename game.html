@@ -14,8 +14,18 @@
       --green:#1aa34a;
       --orange:#f28c00;
       --red:#c01818;
-      --pale:#f3e7a6;
+
+      /* ✅ ألوان السداسي: غامقة لكن شفافية مناسبة عشان الحرف يظل واضح */
+      --hexGreen:  rgba(0, 90, 55, .42);
+      --hexOrange: rgba(185, 75, 0, .42);
+
+      /* ✅ أصفر باهت أوضح + عليه الحركة */
+      --hexPale:   rgba(255, 215, 80, .68);
+
+      /* حد خفيف جداً يعطي تطابق بصري أفضل */
+      --hexBorder: rgba(0,0,0,.10);
     }
+
     body{margin:0;background:var(--bg);font-family:Arial, sans-serif;color:#fff;text-align:center}
     header{position:relative;padding:14px 14px 0}
     .logo{position:absolute;left:14px;top:14px;width:44px;height:44px;object-fit:contain}
@@ -49,7 +59,7 @@
       padding:8px;border-radius:10px;margin:6px 0;cursor:pointer
     }
 
-    /* MAP (حل جذري: SVG Polygons للنقر + مطابق Pointy-Top) */
+    /* MAP */
     .mapOuter{width:100%;display:flex;justify-content:center}
     .mapScale{
       width:min(92vw, 760px);
@@ -69,6 +79,7 @@
       display:block;
       object-fit:unset;
     }
+
     .overlaySvg{
       position:absolute;
       inset:0;
@@ -80,11 +91,25 @@
       cursor:pointer;
       -webkit-tap-highlight-color: transparent;
       touch-action: manipulation;
+      stroke: var(--hexBorder);
+      stroke-width: 1;
     }
-    .overlaySvg .state0{ fill: rgba(0,0,0,0.001); } /* يبقى قابل للنقر */
-    .overlaySvg .state1{ fill: rgba(243,231,166,.75); }
-    .overlaySvg .state2{ fill: rgba(26,163,74,.55); }
-    .overlaySvg .state3{ fill: rgba(242,140,0,.55); }
+
+    /* ✅ الحالات (المطلوبة) */
+    .overlaySvg .state0{ fill: rgba(0,0,0,0.001); }        /* قابل للنقر بدون ما يبان */
+    .overlaySvg .state1{ fill: var(--hexPale); }           /* أصفر باهت */
+    .overlaySvg .state2{ fill: var(--hexGreen); }          /* أخضر */
+    .overlaySvg .state3{ fill: var(--hexOrange); }         /* برتقالي */
+
+    /* ✅ حركة تكرارية فقط للأصفر الباهت */
+    @keyframes palePulse {
+      0%   { opacity: 1; }
+      50%  { opacity: .35; }
+      100% { opacity: 1; }
+    }
+    .overlaySvg .state1.pulse {
+      animation: palePulse 0.9s ease-in-out infinite;
+    }
 
     .below{display:flex;gap:10px;flex-wrap:wrap;justify-content:center;align-items:stretch}
     .buzzBox{
@@ -213,7 +238,7 @@
 
     function cellKey(row,col){ return `${row}-${col}`; }
 
-    // ====== حل جذري: اكتشاف حدود كتلة السداسيات من نفس الصورة + SVG Polygons ======
+    // اكتشاف حدود كتلة السداسيات من نفس الصورة
     const BBOX_CACHE = {}; // key = imgSrc
 
     function detectHexBBox(img){
@@ -242,7 +267,6 @@
           const mx = Math.max(r,g,b), mn = Math.min(r,g,b);
           const avg = (r+g+b)/3;
 
-          // يلتقط منطقة السداسيات البيضاء/الرمادية (ويستبعد الأخضر/البرتقالي)
           if(avg > 180 && (mx - mn) < 60){
             found = true;
             if(x < minX) minX = x;
@@ -271,11 +295,13 @@
     }
 
     function setStateClass(el, st){
-      el.classList.remove("state0","state1","state2","state3");
+      el.classList.remove("state0","state1","state2","state3","pulse");
       el.classList.add(`state${st}`);
+      // ✅ الحركة فقط للأصفر (state1)
+      if(st === 1) el.classList.add("pulse");
     }
 
-    // Pointy-Top (المطلوب مثل الأزرق)
+    // Pointy-Top سداسي (مطابق للخريطة)
     function hexPointsPointyTop(x, y, w, h){
       const pts = [
         [x + w/2, y],
@@ -409,13 +435,11 @@
 
       const mapImg = document.getElementById("mapImg");
       const overlay = document.getElementById("overlay");
-      const mapBox = document.getElementById("mapBox");
       const mapScale = document.getElementById("mapScale");
       const zoom = document.getElementById("zoom");
 
       const activeMap = Number(room.activeMap || 0);
 
-      // مسار الصور داخل مجلد maps وبامتداد jpeg
       const src = ([
         "maps/map1.jpeg",
         "maps/map2.jpeg",
@@ -424,7 +448,7 @@
 
       mapImg.src = src;
 
-      // إنشاء 25 سداسي كـ SVG Polygons
+      // بناء 25 سداسي
       overlay.innerHTML = "";
       overlay.setAttribute("xmlns", "http://www.w3.org/2000/svg");
 
@@ -460,7 +484,6 @@
         const gridW = x1 - x0;
         const gridH = y1 - y0;
 
-        // هندسة الخريطة: 5.5w عرض + 4h ارتفاع (Pointy-Top)
         const w = gridW / 5.5;
         const h = gridH / 4.0;
         const stepY = h * 0.75;
@@ -471,28 +494,22 @@
           for(let col=0; col<5; col++){
             const left = x0 + col*w + (row%2)*(w/2);
             const top  = y0 + row*stepY;
-            const poly = cells[i++];
-            poly.setAttribute("points", hexPointsPointyTop(left, top, w, h));
+            cells[i++].setAttribute("points", hexPointsPointyTop(left, top, w, h));
           }
         }
       }
 
       function onMapReady(){
-        // اكتشاف bbox مرة واحدة لكل صورة
-        if(!BBOX_CACHE[src]){
-          BBOX_CACHE[src] = detectHexBBox(mapImg);
-        }
-        requestAnimationFrame(() => placeHexes());
+        if(!BBOX_CACHE[src]) BBOX_CACHE[src] = detectHexBBox(mapImg);
+        requestAnimationFrame(placeHexes);
       }
 
-      if(mapImg.complete){
-        onMapReady();
-      }else{
-        mapImg.addEventListener("load", onMapReady, { once:true });
-      }
+      if(mapImg.complete) onMapReady();
+      else mapImg.addEventListener("load", onMapReady, { once:true });
+
       window.addEventListener("resize", placeHexes);
 
-      // تطبيق حالات التلوين من قاعدة البيانات
+      // حالات التلوين
       const mapStates = (room.mapStates && room.mapStates[String(activeMap)]) ? room.mapStates[String(activeMap)] : {};
       overlay.querySelectorAll(".cell").forEach(cell => {
         const r = Number(cell.getAttribute("data-row"));
@@ -502,7 +519,7 @@
         setStateClass(cell, st);
       });
 
-      // عرض من ضغط أولًا
+      // اسم أول ضاغط
       const buzzBox = document.getElementById("buzzBox");
       const buzzer = room.buzzer;
 
@@ -516,7 +533,7 @@
         buzzBox.textContent = "—";
       }
 
-      // السؤال للمقدم
+      // سؤال المقدم
       if(isHost){
         const qText = document.getElementById("qText");
         const cur = room.current || {};
@@ -534,7 +551,7 @@
         mapScale.style.setProperty("--zoom", zoom.value);
       });
 
-      // تغيير الخريطة (مقدم فقط)
+      // تغيير الخريطة
       const mapBtn = document.getElementById("mapBtn");
       if(mapBtn){
         mapBtn.addEventListener("click", async () => {
@@ -547,18 +564,15 @@
         });
       }
 
-      // تجميد زر اللاعبين (مقدم فقط) + يمسح اسم الضاغط
+      // تجميد اللاعبين + يمسح اسم الضاغط
       const freezeBtn = document.getElementById("freezeBtn");
       if(freezeBtn){
         freezeBtn.addEventListener("click", async () => {
-          await update(roomRef, {
-            freeze: !room.freeze,
-            buzzer: null
-          });
+          await update(roomRef, { freeze: !room.freeze, buzzer: null });
         });
       }
 
-      // تغيير السؤال (مقدم فقط) بجانب مربع اسم الضاغط الأول
+      // تغيير السؤال
       const nextQ = document.getElementById("nextQ");
       if(nextQ){
         nextQ.addEventListener("click", async () => {
@@ -571,7 +585,7 @@
         });
       }
 
-      // ضغط خلية (مقدم فقط): يلوّن + يحدد حرف + يمسح البازر
+      // كليك المقدم على السداسي: يلوّن + يحدد حرف + يمسح البازر
       if(isHost){
         overlay.querySelectorAll(".cell").forEach(cell => {
           cell.addEventListener("click", async (e) => {
@@ -597,7 +611,7 @@
         });
       }
 
-      // زر اللاعب الكبير (لاعب فقط)
+      // زر اللاعب الكبير
       const buzzBtn = document.getElementById("buzzBtn");
       if(buzzBtn){
         const disabled = (!started) || room.freeze || !me || !me.name;
@@ -641,7 +655,6 @@
         return;
       }
 
-      // لاعب
       const players = room.players || {};
       const me = pid ? players[pid] : null;
 
