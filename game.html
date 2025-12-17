@@ -41,10 +41,10 @@
       object-fit:contain;
       display:none; /* يظهر فقط إذا كان عندنا src صحيح */
     }
-    /* ✅ ملائم وواضح في صفحة اللعبة */
+    /* ✅ ملائم وواضح في صفحة اللعبة (كبرناه 10%) */
     body.inGame .logo{
-      width:64px;
-      height:64px;
+      width:70px;
+      height:70px;
       top:10px;
       left:12px;
     }
@@ -265,7 +265,6 @@
     const roomRef = ref(db, `rooms/${code}`);
 
     function setLogoFromRoom(room){
-      // يحاول يقرأ رابط اللوجو من بيانات الغرفة (وأيضًا يدعم وجود ملف logo.png افتراضيًا)
       const src =
         room?.logoUrl ||
         room?.logoURL ||
@@ -291,7 +290,6 @@
 
     function cellKey(row,col){ return `${row}-${col}`; }
 
-    // اكتشاف حدود كتلة السداسيات من نفس الصورة
     const BBOX_CACHE = {}; // key = imgSrc
 
     function detectHexBBox(img){
@@ -456,6 +454,9 @@
           </div>
         </div>
 
+        <!-- ✅ حل اختفاء الأزرار عند التكبير: سبيسر يحجز مساحة حسب الزوم -->
+        <div id="mapSpacer" style="height:0"></div>
+
         <div style="height:10px"></div>
         <div class="row" style="justify-content:space-between">
           <div class="row">
@@ -497,6 +498,14 @@
       const overlay = document.getElementById("overlay");
       const mapScale = document.getElementById("mapScale");
       const zoom = document.getElementById("zoom");
+      const mapSpacer = document.getElementById("mapSpacer");
+
+      function updateMapSpacer(){
+        const z = Number(zoom.value || 1);
+        const H = mapImg.clientHeight || 0;
+        const extra = Math.max(0, (z - 1) * H);
+        mapSpacer.style.height = `${extra}px`;
+      }
 
       const savedZoom = Number(room.zoom ?? 1);
       zoom.value = String(savedZoom);
@@ -564,13 +573,19 @@
 
       function onMapReady(){
         if(!BBOX_CACHE[src]) BBOX_CACHE[src] = detectHexBBox(mapImg);
-        requestAnimationFrame(placeHexes);
+        requestAnimationFrame(() => {
+          placeHexes();
+          updateMapSpacer();
+        });
       }
 
       if(mapImg.complete) onMapReady();
       else mapImg.addEventListener("load", onMapReady, { once:true });
 
-      window.addEventListener("resize", placeHexes);
+      window.addEventListener("resize", () => {
+        placeHexes();
+        updateMapSpacer();
+      });
 
       const mapStates = (room.mapStates && room.mapStates[String(activeMap)]) ? room.mapStates[String(activeMap)] : {};
       overlay.querySelectorAll(".cell").forEach(cell => {
@@ -609,6 +624,7 @@
       let zoomSaveTimer = null;
       zoom.addEventListener("input", () => {
         mapScale.style.setProperty("--zoom", zoom.value);
+        updateMapSpacer();
 
         if(!isHost) return;
 
@@ -704,7 +720,6 @@
 
       const room = snap.val();
 
-      // ✅ تحديث اللوجو دائمًا
       setLogoFromRoom(room);
 
       gameNameEl.textContent = room?.name ? room.name : "";
