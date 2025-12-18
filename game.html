@@ -15,13 +15,9 @@
       --orange:#f28c00;
       --red:#c01818;
 
-      /* ✅ ألوان السداسي */
       --hexGreen:  rgba(0, 140, 70, .42);
       --hexOrange: rgba(255, 140, 0, .42);
-
-      /* ✅ أصفر باهت + حركة */
       --hexPale:   rgba(255, 215, 80, .68);
-
       --hexBorder: rgba(0,0,0,.10);
     }
 
@@ -104,9 +100,7 @@
       50%  { opacity: .35; }
       100% { opacity: 1; }
     }
-    .overlaySvg .state1.pulse {
-      animation: palePulse 0.9s ease-in-out infinite;
-    }
+    .overlaySvg .state1.pulse { animation: palePulse 0.9s ease-in-out infinite; }
 
     .below{display:flex;gap:10px;flex-wrap:wrap;justify-content:center;align-items:stretch}
     .buzzBox{
@@ -121,6 +115,7 @@
     }
     .qTitle{font-weight:bold;margin-bottom:8px}
     .qText{line-height:1.6}
+    .qAns{line-height:1.6;margin-top:8px;opacity:.9}
     .smallNote{font-size:12px;opacity:.85;margin-top:8px}
 
     .buzzRow{display:flex;gap:10px;flex-wrap:wrap;align-items:stretch;justify-content:center}
@@ -169,11 +164,9 @@
       appId: "1:1053646928152:web:032d50148c3a4f1148066d"
     };
 
-    // ✅ MAPS مطابق 100% للحروف التي أعطيتني
-    // مهم: أنت أعطيتني كل صف "من اليمين إلى اليسار"، لكن col في الكود "من اليسار إلى اليمين"
-    // لذلك قلبنا كل صف هنا (يسار→يمين) حتى يطلع نفس الحرف اللي تضغطه على الصورة.
+    // ✅ (نفس اللي عندك) لا تغيّر الخرائط ولا أماكن الحروف
     const MAPS = [
-      // الخريطة الأولى (صورتها maps/map1.jpeg)
+      // map1
       [
         ["ش","أ","ث","د","هـ"],
         ["ي","ح","ض","ن","ك"],
@@ -181,7 +174,7 @@
         ["ص","ز","س","ط","و"],
         ["ذ","ل","ب","م","ج"]
       ],
-      // الخريطة الثانية (maps/map2.jpeg)
+      // map2
       [
         ["ق","ص","و","د","ب"],
         ["ح","ي","ض","هـ","ث"],
@@ -189,7 +182,7 @@
         ["أ","ر","س","ظ","ث"],
         ["ذ","غ","هـ","ع","ج"]
       ],
-      // الخريطة الثالثة (maps/map3.jpeg)
+      // map3
       [
         ["ذ","ج","أ","ب","ر"],
         ["ي","ح","ز","ل","س"],
@@ -199,11 +192,16 @@
       ]
     ];
 
-    // أسئلة مؤقتة (هيكل فقط)
+    // ✅ هيكلة الأسئلة الجديدة: لكل حرف 25 عنصر (سؤال + جواب)
+    // حالياً مولّد تلقائياً (عشان تتأكد أن الربط صار صح 100%)
+    // بعدين نستبدله بأسئلتك الحقيقية حرف-حرف.
     const QUESTIONS = {};
     const ALL_LETTERS = Array.from(new Set(MAPS.flat(2)));
     for(const L of ALL_LETTERS){
-      QUESTIONS[L] = Array.from({length:25}, () => `سؤال بحرف ${L}`);
+      QUESTIONS[L] = Array.from({length:25}, (_,i) => ({
+        q: `(${i+1}) سؤال لحرف ${L}`,
+        a: `${L}...`   // مهم: يبدأ بنفس الحرف (مكانك تحط الجواب الحقيقي)
+      }));
     }
 
     const app = initializeApp(firebaseConfig);
@@ -416,6 +414,7 @@
             <div class="questionBox">
               <div class="qTitle">السؤال</div>
               <div id="qText" class="qText">اختر حرفًا من الخريطة</div>
+              <div id="qAns" class="qAns"></div>
             </div>
           ` : `
             <div class="questionBox">
@@ -440,7 +439,7 @@
 
       const activeMap = Number(room.activeMap || 0);
 
-      // ✅ ترتيب الصور طبيعي: map1 ثم map2 ثم map3
+      // ✅ لا تغيّر ترتيب الصور (map1,map2,map3)
       const src = ([
         "maps/map1.jpeg",
         "maps/map2.jpeg",
@@ -531,15 +530,26 @@
         buzzBox.textContent = "—";
       }
 
+      // ✅ عرض السؤال حسب الحرف الذي ضغطه المقدم
       if(isHost){
         const qText = document.getElementById("qText");
+        const qAns  = document.getElementById("qAns");
         const cur = room.current || {};
+
         if(cur.letter){
           const list = QUESTIONS[cur.letter] || [];
-          const idx = Number(cur.qIndex || 0) % Math.max(list.length,1);
-          qText.textContent = list.length ? list[idx] : `لا يوجد سؤال لحرف ${cur.letter}`;
+          if(!list.length){
+            qText.textContent = `لا توجد أسئلة لهذا الحرف: ${cur.letter}`;
+            qAns.textContent  = "";
+          }else{
+            const idx = Number(cur.qIndex || 0) % list.length;
+            const item = list[idx];
+            qText.textContent = item?.q ?? "—";
+            qAns.textContent  = item?.a ?? "";
+          }
         }else{
           qText.textContent = "اختر حرفًا من الخريطة";
+          qAns.textContent  = "";
         }
       }
 
@@ -566,6 +576,7 @@
         });
       }
 
+      // ✅ تغيير السؤال لنفس الحرف المختار
       const nextQ = document.getElementById("nextQ");
       if(nextQ){
         nextQ.addEventListener("click", async () => {
@@ -578,7 +589,7 @@
         });
       }
 
-      // ✅ اختيار الحرف من نفس الخريطة الحالية (activeMap) بعد تصحيح MAPS
+      // ✅ عند ضغط المقدم على السداسي: يحدد الحرف الصحيح من MAPS لنفس الخريطة الحالية
       if(isHost){
         overlay.querySelectorAll(".cell").forEach(cell => {
           cell.addEventListener("click", async (e) => {
@@ -592,7 +603,7 @@
             const st = Number(mapStates?.[k] ?? 0);
             const next = (st + 1) % 4;
 
-            const letter = MAPS[activeMap][r][c];
+            const letter = MAPS[activeMap][r][c]; // ✅ هذا هو المفتاح
 
             const updates = {};
             updates[`rooms/${code}/mapStates/${activeMap}/${k}`] = next;
