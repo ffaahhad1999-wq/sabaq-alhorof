@@ -172,44 +172,40 @@
       appId: "1:1053646928152:web:032d50148c3a4f1148066d"
     };
 
-    /* ✅✅ التعديل الوحيد هنا: ربط الحروف باسم ملف الخريطة نفسها (وليس activeMap)
-       حتى لو تبدّل ترتيب الخرائط، الضغط دائماً يجيب حرف نفس الخريطة المعروضة. */
-    const MAPS_BY_SRC = {
-      "maps/map1.jpeg": [
+    // ✅ تم تعديل MAPS فقط لتطابق ترتيب الحروف الذي أرسلته (يمين→يسار لكل صف في الصورة)
+    //    وتم إزالة أي "ت" غير موجودة في الخرائط واستبدالها بـ "ث" في أماكنها الصحيحة.
+    const MAPS = [
+      // الخريطة الأولى
+      [
         ["ذ","ج","أ","ب","ر"],
         ["ي","ح","ز","ل","س"],
-        ["ث","ظ","ق","ص","ع"],
+        ["ث","ظ","ق","ض","ع"],
         ["ص","ن","د","ط","غ"],
         ["ك","خ","هـ","م","و"]
       ],
-      "maps/map2.jpeg": [
+      // الخريطة الثانية
+      [
         ["ش","أ","ث","د","هـ"],
         ["ي","ح","ض","ن","ك"],
         ["غ","ظ","ق","ر","ع"],
         ["ص","ز","س","ط","و"],
         ["ذ","ل","ب","م","ج"]
       ],
-      "maps/map3.jpeg": [
+      // الخريطة الثالثة
+      [
         ["ق","ص","و","د","ب"],
         ["ح","ي","ض","هـ","ث"],
         ["ك","ط","ش","ز","م"],
         ["أ","ر","س","ظ","ث"],
         ["ذ","غ","هـ","ع","ج"]
       ]
-    };
-
-    function getGridBySrc(src){
-      const clean = String(src || "").split("?")[0];
-      if(MAPS_BY_SRC[clean]) return MAPS_BY_SRC[clean];
-      const k = Object.keys(MAPS_BY_SRC).find(x => clean.endsWith(x));
-      return k ? MAPS_BY_SRC[k] : MAPS_BY_SRC["maps/map1.jpeg"];
-    }
+    ];
 
     // أسئلة مؤقتة (هيكل فقط)
     const QUESTIONS = {};
-    const ALL_LETTERS = Array.from(new Set(Object.values(MAPS_BY_SRC).flat(2)));
+    const ALL_LETTERS = Array.from(new Set(MAPS.flat(2)));
     for(const L of ALL_LETTERS){
-      QUESTIONS[L] = Array.from({length:25}, (_,i) => `سؤال بحرف ${L}`);
+      QUESTIONS[L] = Array.from({length:25}, (_,i) => `سؤال بحرف ${L}`); // مكان جاهز للمحتوى لاحقًا
     }
 
     const app = initializeApp(firebaseConfig);
@@ -448,10 +444,11 @@
 
       const activeMap = Number(room.activeMap || 0);
 
+      // ✅ نفس ترتيب الخرائط الموجود في كودك بالضبط: 3,1,2
       const src = ([
+        "maps/map3.jpeg",
         "maps/map1.jpeg",
-        "maps/map2.jpeg",
-        "maps/map3.jpeg"
+        "maps/map2.jpeg"
       ][activeMap] || "maps/map1.jpeg");
 
       mapImg.src = src;
@@ -607,8 +604,7 @@
             const st = Number(mapStates?.[k] ?? 0);
             const next = (st + 1) % 4;
 
-            /* ✅✅ التعديل الوحيد هنا: نجيب الحرف من الخريطة حسب src */
-            const letter = getGridBySrc(src)[r][c];
+            const letter = MAPS[activeMap][r][c];
 
             const updates = {};
             updates[`rooms/${code}/mapStates/${activeMap}/${k}`] = next;
