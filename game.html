@@ -172,8 +172,7 @@
       appId: "1:1053646928152:web:032d50148c3a4f1148066d"
     };
 
-    // ✅ تم تعديل MAPS فقط لتطابق ترتيب الحروف الذي أرسلته (يمين→يسار لكل صف في الصورة)
-    //    وتم إزالة أي "ت" غير موجودة في الخرائط واستبدالها بـ "ث" في أماكنها الصحيحة.
+    // ✅ الحروف كما هي (بدون تغيير)
     const MAPS = [
       // الخريطة الأولى
       [
@@ -205,10 +204,10 @@
     const QUESTIONS = {};
     const ALL_LETTERS = Array.from(new Set(MAPS.flat(2)));
     for(const L of ALL_LETTERS){
-      QUESTIONS[L] = Array.from({length:25}, (_,i) => `سؤال بحرف ${L}`); // مكان جاهز للمحتوى لاحقًا
+      QUESTIONS[L] = Array.from({length:25}, (_,i) => `سؤال بحرف ${L}`);
     }
 
-    // ✅ إضافة أسئلة الحرف الأول: (أ) فقط — 25 سؤال (5 سهل + 15 متوسط + 5 صعب)
+    // ✅ إضافة أسئلة الحرف الأول (أ) فقط — 25 سؤال (5 سهل + 15 متوسط + 5 صعب)
     QUESTIONS["أ"] = [
       // 5 سهل
       "سهل: ما عاصمة الإمارات العربية المتحدة؟ — ج: أبوظبي",
@@ -478,11 +477,12 @@
 
       const activeMap = Number(room.activeMap || 0);
 
+      // ✅ فقط تبديل مواقع الخرائط (بدون تغيير أي شيء آخر)
       const src = ([
-        "maps/map1.jpeg",
         "maps/map2.jpeg",
-        "maps/map3.jpeg"
-      ][activeMap] || "maps/map1.jpeg");
+        "maps/map3.jpeg",
+        "maps/map1.jpeg"
+      ][activeMap] || "maps/map2.jpeg");
 
       mapImg.src = src;
 
