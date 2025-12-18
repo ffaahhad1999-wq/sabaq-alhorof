@@ -15,9 +15,13 @@
       --orange:#f28c00;
       --red:#c01818;
 
+      /* ✅ ألوان السداسي */
       --hexGreen:  rgba(0, 140, 70, .42);
       --hexOrange: rgba(255, 140, 0, .42);
+
+      /* ✅ أصفر باهت + حركة */
       --hexPale:   rgba(255, 215, 80, .68);
+
       --hexBorder: rgba(0,0,0,.10);
     }
 
@@ -100,7 +104,9 @@
       50%  { opacity: .35; }
       100% { opacity: 1; }
     }
-    .overlaySvg .state1.pulse { animation: palePulse 0.9s ease-in-out infinite; }
+    .overlaySvg .state1.pulse {
+      animation: palePulse 0.9s ease-in-out infinite;
+    }
 
     .below{display:flex;gap:10px;flex-wrap:wrap;justify-content:center;align-items:stretch}
     .buzzBox{
@@ -163,16 +169,11 @@
       appId: "1:1053646928152:web:032d50148c3a4f1148066d"
     };
 
+    // ✅ MAPS مطابق 100% للحروف التي أعطيتني
+    // مهم: أنت أعطيتني كل صف "من اليمين إلى اليسار"، لكن col في الكود "من اليسار إلى اليمين"
+    // لذلك قلبنا كل صف هنا (يسار→يمين) حتى يطلع نفس الحرف اللي تضغطه على الصورة.
     const MAPS = [
-      // الخريطة الأولى
-      [
-        ["ذ","ج","أ","ب","ر"],
-        ["ي","ح","ز","ل","س"],
-        ["ث","ظ","ق","ض","ع"],
-        ["ص","ن","د","ط","غ"],
-        ["ك","خ","هـ","م","و"]
-      ],
-      // الخريطة الثانية
+      // الخريطة الأولى (صورتها maps/map1.jpeg)
       [
         ["ش","أ","ث","د","هـ"],
         ["ي","ح","ض","ن","ك"],
@@ -180,27 +181,23 @@
         ["ص","ز","س","ط","و"],
         ["ذ","ل","ب","م","ج"]
       ],
-      // الخريطة الثالثة
+      // الخريطة الثانية (maps/map2.jpeg)
       [
         ["ق","ص","و","د","ب"],
         ["ح","ي","ض","هـ","ث"],
         ["ك","ط","ش","ز","م"],
         ["أ","ر","س","ظ","ث"],
         ["ذ","غ","هـ","ع","ج"]
+      ],
+      // الخريطة الثالثة (maps/map3.jpeg)
+      [
+        ["ذ","ج","أ","ب","ر"],
+        ["ي","ح","ز","ل","س"],
+        ["ث","ظ","ق","ض","ع"],
+        ["ص","ن","د","ط","غ"],
+        ["ك","خ","هـ","م","و"]
       ]
     ];
-
-    // ✅✅✅ التعديل الجذري الوحيد:
-    // هذا السطر هو اللي يحدد تسلسل الخرائط (صورة + حروف) معاً
-    // [0,1,2] = map1 ثم map2 ثم map3
-    // إذا تحتاج (3,1,2) سابقاً جرّب: [2,0,1]
-    const MAP_SEQUENCE = [0, 1, 2];
-
-    const MAP_FILES = ["maps/map1.jpeg","maps/map2.jpeg","maps/map3.jpeg"];
-    function getMapDef(activeMap){
-      const idx = MAP_SEQUENCE[activeMap] ?? 0;
-      return { src: MAP_FILES[idx], lettersGrid: MAPS[idx] };
-    }
 
     // أسئلة مؤقتة (هيكل فقط)
     const QUESTIONS = {};
@@ -240,7 +237,7 @@
 
     function cellKey(row,col){ return `${row}-${col}`; }
 
-    const BBOX_CACHE = {}; // key = imgSrc
+    const BBOX_CACHE = {};
 
     function detectHexBBox(img){
       const nw = img.naturalWidth, nh = img.naturalHeight;
@@ -443,9 +440,12 @@
 
       const activeMap = Number(room.activeMap || 0);
 
-      const def = getMapDef(activeMap);
-      const src = def.src;
-      const lettersGrid = def.lettersGrid;
+      // ✅ ترتيب الصور طبيعي: map1 ثم map2 ثم map3
+      const src = ([
+        "maps/map1.jpeg",
+        "maps/map2.jpeg",
+        "maps/map3.jpeg"
+      ][activeMap] || "maps/map1.jpeg");
 
       mapImg.src = src;
 
@@ -578,6 +578,7 @@
         });
       }
 
+      // ✅ اختيار الحرف من نفس الخريطة الحالية (activeMap) بعد تصحيح MAPS
       if(isHost){
         overlay.querySelectorAll(".cell").forEach(cell => {
           cell.addEventListener("click", async (e) => {
@@ -591,7 +592,7 @@
             const st = Number(mapStates?.[k] ?? 0);
             const next = (st + 1) % 4;
 
-            const letter = lettersGrid[r][c];
+            const letter = MAPS[activeMap][r][c];
 
             const updates = {};
             updates[`rooms/${code}/mapStates/${activeMap}/${k}`] = next;
