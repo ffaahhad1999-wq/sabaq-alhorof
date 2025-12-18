@@ -18,11 +18,7 @@
       /* ✅ ألوان السداسي */
       --hexGreen:  rgba(0, 140, 70, .42);
       --hexOrange: rgba(255, 140, 0, .42);
-
-      /* ✅ أصفر باهت أوضح + عليه الحركة */
       --hexPale:   rgba(255, 215, 80, .68);
-
-      /* حد خفيف جداً */
       --hexBorder: rgba(0,0,0,.10);
     }
 
@@ -101,15 +97,12 @@
     .overlaySvg .state2{ fill: var(--hexGreen); }
     .overlaySvg .state3{ fill: var(--hexOrange); }
 
-    /* ✅ حركة تكرارية فقط للأصفر الباهت */
     @keyframes palePulse {
       0%   { opacity: 1; }
       50%  { opacity: .35; }
       100% { opacity: 1; }
     }
-    .overlaySvg .state1.pulse {
-      animation: palePulse 0.9s ease-in-out infinite;
-    }
+    .overlaySvg .state1.pulse { animation: palePulse 0.9s ease-in-out infinite; }
 
     .below{display:flex;gap:10px;flex-wrap:wrap;justify-content:center;align-items:stretch}
     .buzzBox{
@@ -172,9 +165,7 @@
       appId: "1:1053646928152:web:032d50148c3a4f1148066d"
     };
 
-    // ✅ جداول الحروف (كما عندك)
     const MAPS = [
-      // الخريطة الأولى
       [
         ["ذ","ج","أ","ب","ر"],
         ["ي","ح","ز","ل","س"],
@@ -182,7 +173,6 @@
         ["ص","ن","د","ط","غ"],
         ["ك","خ","هـ","م","و"]
       ],
-      // الخريطة الثانية
       [
         ["ش","أ","ث","د","هـ"],
         ["ي","ح","ض","ن","ك"],
@@ -190,7 +180,6 @@
         ["ص","ز","س","ط","و"],
         ["ذ","ل","ب","م","ج"]
       ],
-      // الخريطة الثالثة
       [
         ["ق","ص","و","د","ب"],
         ["ح","ي","ض","هـ","ث"],
@@ -200,23 +189,13 @@
       ]
     ];
 
-    /**
-     * ✅ الحل الجذري:
-     * بدل ما نعرض صورة بترتيب مختلف ونحاول "نحوّل" على MAPS،
-     * نخلي كل activeMap يملك (الصورة + جدول الحروف) معًا.
-     *
-     * ترتيب الصور عندك: 3,1,2
-     * - activeMap=0 => map3.jpeg => letters = MAPS[2]
-     * - activeMap=1 => map1.jpeg => letters = MAPS[0]
-     * - activeMap=2 => map2.jpeg => letters = MAPS[1]
-     */
+    // ✅ (التعديل الوحيد هنا): ترتيب الخرائط رجّعناه 1,2,3 بشكل مباشر
     const MAP_DEFS = [
-      { src: "maps/map3.jpeg", letters: MAPS[2] },
       { src: "maps/map1.jpeg", letters: MAPS[0] },
       { src: "maps/map2.jpeg", letters: MAPS[1] },
+      { src: "maps/map3.jpeg", letters: MAPS[2] },
     ];
 
-    // أسئلة مؤقتة (هيكل فقط)
     const QUESTIONS = {};
     const ALL_LETTERS = Array.from(new Set(MAPS.flat(2)));
     for(const L of ALL_LETTERS){
@@ -254,8 +233,7 @@
 
     function cellKey(row,col){ return `${row}-${col}`; }
 
-    // اكتشاف حدود كتلة السداسيات من نفس الصورة
-    const BBOX_CACHE = {}; // key = imgSrc
+    const BBOX_CACHE = {};
 
     function detectHexBBox(img){
       const nw = img.naturalWidth, nh = img.naturalHeight;
@@ -316,7 +294,6 @@
       if(st === 1) el.classList.add("pulse");
     }
 
-    // Pointy-Top سداسي (مطابق للخريطة)
     function hexPointsPointyTop(x, y, w, h){
       const pts = [
         [x + w/2, y],
@@ -459,14 +436,12 @@
 
       const activeMap = Number(room.activeMap || 0);
 
-      // ✅ هنا الجذر: مصدر الصورة + حروفها من نفس MAP_DEFS
       const mapDef = MAP_DEFS[activeMap] || MAP_DEFS[0];
       const src = mapDef.src;
       const lettersGrid = mapDef.letters;
 
       mapImg.src = src;
 
-      // بناء 25 سداسي
       overlay.innerHTML = "";
       overlay.setAttribute("xmlns", "http://www.w3.org/2000/svg");
 
@@ -527,7 +502,6 @@
 
       window.addEventListener("resize", placeHexes);
 
-      // حالات التلوين
       const mapStates = (room.mapStates && room.mapStates[String(activeMap)]) ? room.mapStates[String(activeMap)] : {};
       overlay.querySelectorAll(".cell").forEach(cell => {
         const r = Number(cell.getAttribute("data-row"));
@@ -537,7 +511,6 @@
         setStateClass(cell, st);
       });
 
-      // اسم أول ضاغط
       const buzzBox = document.getElementById("buzzBox");
       const buzzer = room.buzzer;
 
@@ -551,7 +524,6 @@
         buzzBox.textContent = "—";
       }
 
-      // سؤال المقدم
       if(isHost){
         const qText = document.getElementById("qText");
         const cur = room.current || {};
@@ -564,12 +536,10 @@
         }
       }
 
-      // زوم
       zoom.addEventListener("input", () => {
         mapScale.style.setProperty("--zoom", zoom.value);
       });
 
-      // تغيير الخريطة
       const mapBtn = document.getElementById("mapBtn");
       if(mapBtn){
         mapBtn.addEventListener("click", async () => {
@@ -582,7 +552,6 @@
         });
       }
 
-      // تجميد اللاعبين + يمسح اسم الضاغط
       const freezeBtn = document.getElementById("freezeBtn");
       if(freezeBtn){
         freezeBtn.addEventListener("click", async () => {
@@ -590,7 +559,6 @@
         });
       }
 
-      // تغيير السؤال
       const nextQ = document.getElementById("nextQ");
       if(nextQ){
         nextQ.addEventListener("click", async () => {
@@ -603,7 +571,6 @@
         });
       }
 
-      // ✅ كليك المقدم على السداسي: يلوّن + يحدد حرف + يمسح البازر (حرف الخريطة الصحيحة 100%)
       if(isHost){
         overlay.querySelectorAll(".cell").forEach(cell => {
           cell.addEventListener("click", async (e) => {
@@ -617,7 +584,6 @@
             const st = Number(mapStates?.[k] ?? 0);
             const next = (st + 1) % 4;
 
-            // ✅ حرف من نفس الخريطة المعروضة فعليًا
             const letter = lettersGrid[r][c];
 
             const updates = {};
@@ -630,7 +596,6 @@
         });
       }
 
-      // زر اللاعب الكبير
       const buzzBtn = document.getElementById("buzzBtn");
       if(buzzBtn){
         const disabled = (!started) || room.freeze || !me || !me.name;
@@ -652,7 +617,6 @@
       }
     }
 
-    // مراقبة الغرفة
     onValue(roomRef, (snap) => {
       if(!snap.exists()){
         main.textContent = "اللعبة غير موجودة (رمز غير صحيح).";
