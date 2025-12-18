@@ -15,7 +15,6 @@
       --orange:#f28c00;
       --red:#c01818;
 
-      /* ✅ ألوان السداسي */
       --hexGreen:  rgba(0, 140, 70, .42);
       --hexOrange: rgba(255, 140, 0, .42);
       --hexPale:   rgba(255, 215, 80, .68);
@@ -91,7 +90,6 @@
       stroke-width: 1;
     }
 
-    /* ✅ الحالات */
     .overlaySvg .state0{ fill: rgba(0,0,0,0.001); }
     .overlaySvg .state1{ fill: var(--hexPale); }
     .overlaySvg .state2{ fill: var(--hexGreen); }
@@ -166,6 +164,7 @@
     };
 
     const MAPS = [
+      // الخريطة الأولى
       [
         ["ذ","ج","أ","ب","ر"],
         ["ي","ح","ز","ل","س"],
@@ -173,6 +172,7 @@
         ["ص","ن","د","ط","غ"],
         ["ك","خ","هـ","م","و"]
       ],
+      // الخريطة الثانية
       [
         ["ش","أ","ث","د","هـ"],
         ["ي","ح","ض","ن","ك"],
@@ -180,6 +180,7 @@
         ["ص","ز","س","ط","و"],
         ["ذ","ل","ب","م","ج"]
       ],
+      // الخريطة الثالثة
       [
         ["ق","ص","و","د","ب"],
         ["ح","ي","ض","هـ","ث"],
@@ -189,13 +190,19 @@
       ]
     ];
 
-    // ✅ (التعديل الوحيد هنا): ترتيب الخرائط رجّعناه 1,2,3 بشكل مباشر
-    const MAP_DEFS = [
-      { src: "maps/map1.jpeg", letters: MAPS[0] },
-      { src: "maps/map2.jpeg", letters: MAPS[1] },
-      { src: "maps/map3.jpeg", letters: MAPS[2] },
-    ];
+    // ✅✅✅ التعديل الجذري الوحيد:
+    // هذا السطر هو اللي يحدد تسلسل الخرائط (صورة + حروف) معاً
+    // [0,1,2] = map1 ثم map2 ثم map3
+    // إذا تحتاج (3,1,2) سابقاً جرّب: [2,0,1]
+    const MAP_SEQUENCE = [0, 1, 2];
 
+    const MAP_FILES = ["maps/map1.jpeg","maps/map2.jpeg","maps/map3.jpeg"];
+    function getMapDef(activeMap){
+      const idx = MAP_SEQUENCE[activeMap] ?? 0;
+      return { src: MAP_FILES[idx], lettersGrid: MAPS[idx] };
+    }
+
+    // أسئلة مؤقتة (هيكل فقط)
     const QUESTIONS = {};
     const ALL_LETTERS = Array.from(new Set(MAPS.flat(2)));
     for(const L of ALL_LETTERS){
@@ -233,7 +240,7 @@
 
     function cellKey(row,col){ return `${row}-${col}`; }
 
-    const BBOX_CACHE = {};
+    const BBOX_CACHE = {}; // key = imgSrc
 
     function detectHexBBox(img){
       const nw = img.naturalWidth, nh = img.naturalHeight;
@@ -436,9 +443,9 @@
 
       const activeMap = Number(room.activeMap || 0);
 
-      const mapDef = MAP_DEFS[activeMap] || MAP_DEFS[0];
-      const src = mapDef.src;
-      const lettersGrid = mapDef.letters;
+      const def = getMapDef(activeMap);
+      const src = def.src;
+      const lettersGrid = def.lettersGrid;
 
       mapImg.src = src;
 
