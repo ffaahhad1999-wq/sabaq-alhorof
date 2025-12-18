@@ -199,49 +199,26 @@
       ]
     ];
 
-    // ✅ لأن ترتيب الصور: 3,1,2
+    // ✅ مهم جداً: لأن ترتيب الصور عندك 3,1,2 لازم نطابقه مع MAPS
     // activeMap: 0=>map3 => MAPS[2], 1=>map1 => MAPS[0], 2=>map2 => MAPS[1]
     const MAP_FOR_ACTIVE = [2, 0, 1];
 
-    // أسئلة مؤقتة (هيكل فقط)
-    const QUESTIONS = {};
-    const ALL_LETTERS = Array.from(new Set(MAPS.flat(2)));
-    for(const L of ALL_LETTERS){
-      QUESTIONS[L] = Array.from({length:25}, (_,i) => `سؤال بحرف ${L}`);
+    /* =========================================================
+       ✅ تعديلنا الوحيد هنا: فصل الأسئلة لكل خريطة (activeMap)
+       QUESTIONS_BY_ACTIVE[activeMap][letter] => Array(25)
+       ========================================================= */
+    const QUESTIONS_BY_ACTIVE = Array.from({ length: 3 }, () => ({}));
+
+    for (let a = 0; a < 3; a++) {
+      const mapIdx = MAP_FOR_ACTIVE[a] ?? a;         // نفس خريطة الصورة
+      const letters = Array.from(new Set(MAPS[mapIdx].flat(2)));
+
+      for (const L of letters) {
+        // هيكل فقط (25 سؤال) — لاحقًا بنستبدل النصوص بمحتوى فعلي
+        QUESTIONS_BY_ACTIVE[a][L] = Array.from({ length: 25 }, () => `سؤال بحرف ${L}`);
+      }
     }
-
-    // ✅ إضافة ٢٥ سؤال (سؤال + جواب) لحرف "أ" فقط
-    QUESTIONS["أ"] = [
-      "ما الحيوان الذي يقفز بسرعة وله آذان طويلة؟ | الجواب: أرنب",
-      "ما الحيوان الملقب بملك الغابة؟ | الجواب: أسد",
-      "ما لون السماء في يومٍ صحو؟ | الجواب: أزرق",
-      "ما لون ورقة الشجر غالبًا؟ | الجواب: أخضر",
-      "ما لون الغيوم في أغلب الأيام؟ | الجواب: أبيض",
-
-      "ما العنصر الكيميائي الذي يرمز له بالحرف O؟ | الجواب: أكسجين",
-      "ما العنصر الكيميائي الذي يرمز له بـ Al؟ | الجواب: ألومنيوم",
-      "ما اسم المحيط الذي يفصل بين أوروبا والأمريكتين؟ | الجواب: أطلسي",
-      "ما اسم القارة التي تضم دولًا مثل فرنسا وإيطاليا وألمانيا؟ | الجواب: أوروبا",
-      "ما اسم القارة التي تضم مصر ونيجيريا وجنوب أفريقيا؟ | الجواب: أفريقيا",
-
-      "ما عاصمة النرويج؟ | الجواب: أوسلو",
-      "ما عاصمة اليونان؟ | الجواب: أثينا",
-      "ما عاصمة الإمارات العربية المتحدة؟ | الجواب: أبوظبي",
-      "ما الدولة التي عاصمتها بوينس آيرس؟ | الجواب: أرجنتين",
-      "ما الدولة التي عاصمتها كانبرا؟ | الجواب: أستراليا",
-
-      "ما اسم الولاية الأمريكية الأكبر مساحة؟ | الجواب: ألاسكا",
-      "ما اسم الدولة التي عاصمتها يريفان؟ | الجواب: أرمينيا",
-      "ما اسم الدولة التي عاصمتها باكو؟ | الجواب: أذربيجان",
-      "ما اسم الدولة التي تُعرف بكثرة الجزر وعاصمتها جاكرتا؟ | الجواب: أندونيسيا",
-      "ما لون البحر المذكور في اسم (البحر الأحمر)؟ | الجواب: أحمر",
-
-      "ما اسم التمثال الشهير قرب أهرامات الجيزة بجسم أسد ورأس إنسان؟ | الجواب: أبو الهول",
-      "ما اسم الإقليم الذي حكمه المسلمون قرونًا في إسبانيا تاريخيًا؟ | الجواب: أندلس",
-      "ما اسم الكوكب السابع ترتيبًا من الشمس؟ | الجواب: أورانوس",
-      "ما اسم أول حرف في الأبجدية العربية؟ | الجواب: ألف",
-      "ما اسم شهر ميلادي يأتي بعد سبتمبر؟ | الجواب: أكتوبر"
-    ];
+    /* ========================================================= */
 
     const app = initializeApp(firebaseConfig);
     const db = getDatabase(app);
@@ -477,6 +454,7 @@
 
       const activeMap = Number(room.activeMap || 0);
 
+      // ✅ ترتيب الصور كما هو عندك: 3,1,2
       const src = ([
         "maps/map3.jpeg",
         "maps/map1.jpeg",
@@ -567,11 +545,13 @@
         buzzBox.textContent = "—";
       }
 
+      // سؤال المقدم
       if(isHost){
         const qText = document.getElementById("qText");
         const cur = room.current || {};
         if(cur.letter){
-          const list = QUESTIONS[cur.letter] || [];
+          const mapKey = Number(cur.map ?? activeMap); // current.map محفوظ عندك = activeMap
+          const list = QUESTIONS_BY_ACTIVE?.[mapKey]?.[cur.letter] || [];
           const idx = Number(cur.qIndex || 0) % Math.max(list.length,1);
           qText.textContent = list.length ? list[idx] : `لا يوجد سؤال لحرف ${cur.letter}`;
         }else{
@@ -607,13 +587,17 @@
         nextQ.addEventListener("click", async () => {
           const cur = room.current || {};
           if(!cur.letter) return;
-          const list = QUESTIONS[cur.letter] || [];
+
+          const mapKey = Number(cur.map ?? activeMap);
+          const list = QUESTIONS_BY_ACTIVE?.[mapKey]?.[cur.letter] || [];
           if(!list.length) return;
+
           const nextIndex = (Number(cur.qIndex || 0) + 1) % list.length;
           await update(roomRef, { current: { ...cur, qIndex: nextIndex } });
         });
       }
 
+      // ✅ هنا التعديل الوحيد: ربط الحرف بالـ MAP الصحيح الموافق للصورة الحالية
       if(isHost){
         overlay.querySelectorAll(".cell").forEach(cell => {
           cell.addEventListener("click", async (e) => {
