@@ -172,8 +172,6 @@
       appId: "1:1053646928152:web:032d50148c3a4f1148066d"
     };
 
-    // ✅ تم تعديل MAPS فقط لتطابق ترتيب الحروف الذي أرسلته (يمين→يسار لكل صف في الصورة)
-    //    وتم إزالة أي "ت" غير موجودة في الخرائط واستبدالها بـ "ث" في أماكنها الصحيحة.
     const MAPS = [
       // الخريطة الأولى
       [
@@ -201,11 +199,15 @@
       ]
     ];
 
+    // ✅ مهم جداً: لأن ترتيب الصور عندك 3,1,2 لازم نطابقه مع MAPS
+    // activeMap: 0=>map3 => MAPS[2], 1=>map1 => MAPS[0], 2=>map2 => MAPS[1]
+    const MAP_FOR_ACTIVE = [2, 0, 1];
+
     // أسئلة مؤقتة (هيكل فقط)
     const QUESTIONS = {};
     const ALL_LETTERS = Array.from(new Set(MAPS.flat(2)));
     for(const L of ALL_LETTERS){
-      QUESTIONS[L] = Array.from({length:25}, (_,i) => `سؤال بحرف ${L}`); // مكان جاهز للمحتوى لاحقًا
+      QUESTIONS[L] = Array.from({length:25}, (_,i) => `سؤال بحرف ${L}`);
     }
 
     const app = initializeApp(firebaseConfig);
@@ -239,7 +241,6 @@
 
     function cellKey(row,col){ return `${row}-${col}`; }
 
-    // اكتشاف حدود كتلة السداسيات من نفس الصورة
     const BBOX_CACHE = {}; // key = imgSrc
 
     function detectHexBBox(img){
@@ -301,7 +302,6 @@
       if(st === 1) el.classList.add("pulse");
     }
 
-    // Pointy-Top سداسي (مطابق للخريطة)
     function hexPointsPointyTop(x, y, w, h){
       const pts = [
         [x + w/2, y],
@@ -444,7 +444,7 @@
 
       const activeMap = Number(room.activeMap || 0);
 
-      // ✅ نفس ترتيب الخرائط الموجود في كودك بالضبط: 3,1,2
+      // ✅ ترتيب الصور كما هو عندك: 3,1,2
       const src = ([
         "maps/map3.jpeg",
         "maps/map1.jpeg",
@@ -453,7 +453,6 @@
 
       mapImg.src = src;
 
-      // بناء 25 سداسي
       overlay.innerHTML = "";
       overlay.setAttribute("xmlns", "http://www.w3.org/2000/svg");
 
@@ -514,7 +513,6 @@
 
       window.addEventListener("resize", placeHexes);
 
-      // حالات التلوين
       const mapStates = (room.mapStates && room.mapStates[String(activeMap)]) ? room.mapStates[String(activeMap)] : {};
       overlay.querySelectorAll(".cell").forEach(cell => {
         const r = Number(cell.getAttribute("data-row"));
@@ -524,7 +522,6 @@
         setStateClass(cell, st);
       });
 
-      // اسم أول ضاغط
       const buzzBox = document.getElementById("buzzBox");
       const buzzer = room.buzzer;
 
@@ -538,7 +535,6 @@
         buzzBox.textContent = "—";
       }
 
-      // سؤال المقدم
       if(isHost){
         const qText = document.getElementById("qText");
         const cur = room.current || {};
@@ -551,12 +547,10 @@
         }
       }
 
-      // زوم
       zoom.addEventListener("input", () => {
         mapScale.style.setProperty("--zoom", zoom.value);
       });
 
-      // تغيير الخريطة
       const mapBtn = document.getElementById("mapBtn");
       if(mapBtn){
         mapBtn.addEventListener("click", async () => {
@@ -569,7 +563,6 @@
         });
       }
 
-      // تجميد اللاعبين + يمسح اسم الضاغط
       const freezeBtn = document.getElementById("freezeBtn");
       if(freezeBtn){
         freezeBtn.addEventListener("click", async () => {
@@ -577,7 +570,6 @@
         });
       }
 
-      // تغيير السؤال
       const nextQ = document.getElementById("nextQ");
       if(nextQ){
         nextQ.addEventListener("click", async () => {
@@ -590,7 +582,7 @@
         });
       }
 
-      // كليك المقدم على السداسي: يلوّن + يحدد حرف + يمسح البازر
+      // ✅ هنا التعديل الوحيد: ربط الحرف بالـ MAP الصحيح الموافق للصورة الحالية
       if(isHost){
         overlay.querySelectorAll(".cell").forEach(cell => {
           cell.addEventListener("click", async (e) => {
@@ -604,7 +596,8 @@
             const st = Number(mapStates?.[k] ?? 0);
             const next = (st + 1) % 4;
 
-            const letter = MAPS[activeMap][r][c];
+            const mapIdx = MAP_FOR_ACTIVE[activeMap] ?? activeMap;   // ✅ التعديل
+            const letter = MAPS[mapIdx][r][c];                       // ✅ التعديل
 
             const updates = {};
             updates[`rooms/${code}/mapStates/${activeMap}/${k}`] = next;
@@ -616,7 +609,6 @@
         });
       }
 
-      // زر اللاعب الكبير
       const buzzBtn = document.getElementById("buzzBtn");
       if(buzzBtn){
         const disabled = (!started) || room.freeze || !me || !me.name;
@@ -638,7 +630,6 @@
       }
     }
 
-    // مراقبة الغرفة
     onValue(roomRef, (snap) => {
       if(!snap.exists()){
         main.textContent = "اللعبة غير موجودة (رمز غير صحيح).";
