@@ -3,97 +3,49 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>سباق الحروف</title>
+  <title>لعبة سباق الحروف</title>
   <style>
     :root{
       --bg:#1f4fa3;
       --yellow:#f4c400;
       --card:#ffffff;
       --text:#111;
-      --muted:#666;
-      --green:#1aa34a;
-      --orange:#f28c00;
-      --red:#c01818;
     }
     body{margin:0;background:var(--bg);font-family:Arial, sans-serif;color:#fff;text-align:center}
-    header{padding:18px 14px 0}
-    h1{margin:8px 0 14px;color:var(--yellow);font-size:30px}
-    .wrap{width:95%;max-width:900px;margin:0 auto}
-    .card{
-      background:var(--card);color:var(--text);
-      width:100%;margin:12px auto;padding:14px;border-radius:14px;
-      box-sizing:border-box
+    header{position:relative;padding:30px 16px 0}
+    .logo{
+      position:absolute;left:14px;top:14px;
+      width:86px;height:86px;object-fit:contain;
+      pointer-events:none;
     }
-    .bigCreate{
-      background:rgba(255,255,255,.14);
-      border:1px solid rgba(244,196,0,.55);
-      border-radius:16px;
-      padding:18px 14px;
-      cursor:pointer;
-      user-select:none;
-      box-shadow:0 10px 24px rgba(0,0,0,.16);
+    h1{margin:18px 0 14px;color:var(--yellow);font-size:28px}
+    .wrap{width:92%;max-width:520px;margin:0 auto}
+    .card{background:var(--card);color:var(--text);border-radius:12px;padding:14px}
+    input{
+      width:100%;box-sizing:border-box;
+      padding:14px;margin:10px 0;
+      font-size:16px;border-radius:10px;border:0;
     }
-    .bigCreate .t{color:#fff;font-weight:bold;font-size:20px}
-    .bigCreate .s{color:#fff;opacity:.9;margin-top:6px;font-size:13px}
-    .formArea{margin-top:12px;display:none}
-    .row{display:flex;gap:10px;flex-wrap:wrap;justify-content:center;align-items:center}
-    input, select{
-      padding:12px 12px;
-      border-radius:12px;
-      border:0;
-      font-size:16px;
-      min-width:220px;
-      outline:none;
+    button{
+      width:100%;padding:16px;margin-top:10px;
+      font-size:18px;border:none;border-radius:12px;cursor:pointer;
+      background:var(--yellow);color:#000
     }
-    .btn{
-      padding:14px 16px;
-      font-size:18px;
-      border:none;border-radius:12px;
-      cursor:pointer;
-    }
-    .btnYellow{background:var(--yellow);color:#000;font-weight:bold;min-width:220px}
-    .note{margin-top:10px;font-size:12px;color:rgba(255,255,255,.9)}
-    .err{margin-top:10px;color:#fff;background:rgba(192,24,24,.25);padding:10px;border-radius:12px;display:none}
-    .ok{margin-top:10px;color:#fff;background:rgba(26,163,74,.25);padding:10px;border-radius:12px;display:none}
+    .hint{font-size:13px;opacity:.9;margin-top:8px}
   </style>
 </head>
 <body>
   <header>
-    <h1>سباق الحروف</h1>
+    <img class="logo" src="logo.png" alt="شعار صندوق المسابقات">
+    <h1>لعبة سباق الحروف</h1>
   </header>
 
   <div class="wrap">
-    <!-- ✅ هذا هو المربع الكبير: إنشئ لعبة -->
     <div class="card">
-      <div id="createBox" class="bigCreate">
-        <div class="t">إنشئ لعبة</div>
-        <div class="s">اضغط لإنشاء غرفة جديدة</div>
-      </div>
-
-      <!-- ✅ الخيارات التي تظهر بعد الضغط: اسم اللعبة + عدد اللاعبين + زر ابدأ اللعبة -->
-      <div id="formArea" class="formArea">
-        <div class="row" style="margin-top:12px">
-          <input id="gameName" type="text" placeholder="اسم اللعبة" maxlength="40" />
-          <select id="playersCount">
-            <option value="2">عدد اللاعبين: 2</option>
-            <option value="4" selected>عدد اللاعبين: 4</option>
-            <option value="6">عدد اللاعبين: 6</option>
-            <option value="8">عدد اللاعبين: 8</option>
-            <option value="10">عدد اللاعبين: 10</option>
-          </select>
-        </div>
-
-        <div class="row" style="margin-top:12px">
-          <button id="startBtn" class="btn btnYellow">ابدأ اللعبة</button>
-        </div>
-
-        <div class="note">
-          دخول اللاعبين يكون عبر صفحة الانضمام (join.html) فقط من خلال الرمز/الباركود.
-        </div>
-
-        <div id="ok" class="ok">تم إنشاء اللعبة…</div>
-        <div id="err" class="err">حدث خطأ</div>
-      </div>
+      <input id="name" placeholder="ادخل اسم اللعبة">
+      <input id="players" inputmode="numeric" placeholder="ادخل عدد اللاعبين (1 إلى 10)">
+      <button id="btn">انشئ اللعبة</button>
+      <div class="hint">تقدر تكتب الأرقام عربي أو إنجليزي</div>
     </div>
   </div>
 
@@ -114,93 +66,71 @@
     const app = initializeApp(firebaseConfig);
     const db = getDatabase(app);
 
-    const createBox = document.getElementById("createBox");
-    const formArea = document.getElementById("formArea");
-    const gameNameEl = document.getElementById("gameName");
-    const playersCountEl = document.getElementById("playersCount");
-    const startBtn = document.getElementById("startBtn");
-    const errEl = document.getElementById("err");
-    const okEl = document.getElementById("ok");
-
-    function showErr(msg){
-      errEl.style.display = "block";
-      errEl.textContent = msg;
+    function normalizeDigits(str){
+      const map = {"٠":"0","١":"1","٢":"2","٣":"3","٤":"4","٥":"5","٦":"6","٧":"7","٨":"8","٩":"9"};
+      return String(str ?? "").trim().replace(/[٠-٩]/g, d => map[d]);
     }
-    function hideErr(){ errEl.style.display = "none"; }
-    function showOk(msg){
-      okEl.style.display = "block";
-      okEl.textContent = msg;
-    }
-    function hideOk(){ okEl.style.display = "none"; }
 
-    createBox.addEventListener("click", () => {
-      const open = formArea.style.display === "block";
-      formArea.style.display = open ? "none" : "block";
-      hideErr(); hideOk();
-      if(!open) setTimeout(() => gameNameEl.focus(), 50);
-    });
-
-    function randomCode(){
-      // 4 أرقام (0000 - 9999) مع ضمان 4 خانات
-      const n = Math.floor(Math.random() * 10000);
-      return String(n).padStart(4, "0");
+    function random6(){
+      return String(Math.floor(100000 + Math.random()*900000));
     }
+
     function randomKey(){
-      // مفتاح بسيط للمقدم
-      return (Math.random().toString(36).slice(2, 10) + Math.random().toString(36).slice(2, 8)).toUpperCase();
+      return Math.random().toString(36).slice(2) + Math.random().toString(36).slice(2);
     }
 
     async function createRoom(){
-      const name = (gameNameEl.value || "").trim() || "سباق الحروف";
-      const maxPlayers = Number(playersCountEl.value || 4);
-      const presenterKey = randomKey();
+      const name = document.getElementById("name").value.trim();
+      const pRaw = document.getElementById("players").value;
+      const players = Number(normalizeDigits(pRaw));
 
-      // جرّب كم مرة لتفادي التصادم في الرمز
-      for(let attempt=0; attempt<8; attempt++){
-        const code = randomCode();
-        const roomRef = ref(db, `rooms/${code}`);
-        const snap = await get(roomRef);
-        if(snap.exists()) continue;
-
-        const roomData = {
-          code,
-          name,
-          maxPlayers,
-          presenterKey,
-          status: "lobby",
-          createdAt: Date.now(),
-          activeMap: 0,
-          freeze: false,
-          buzzer: null,
-          current: { letter: null, qIndex: 0, row: null, col: null, map: 0 },
-          mapStates: {},
-          scores: { orange: 0, green: 0 },
-          players: {}
-        };
-
-        await set(roomRef, roomData);
-
-        // انتقال لصفحة اختيار اللاعبين (المقدم)
-        location.href = `game.html?role=host&code=${encodeURIComponent(code)}&key=${encodeURIComponent(presenterKey)}`;
+      if(!name){ alert("اكتب اسم اللعبة"); return; }
+      if(!Number.isFinite(players) || players < 1 || players > 10){
+        alert("عدد اللاعبين لازم من 1 إلى 10");
         return;
       }
 
-      throw new Error("تعذر إنشاء رمز غرفة جديد، حاول مرة أخرى.");
+      const btn = document.getElementById("btn");
+      btn.disabled = true;
+
+      let code = "";
+      for(let i=0;i<10;i++){
+        const c = random6();
+        const exists = (await get(ref(db, `rooms/${c}`))).exists();
+        if(!exists){ code = c; break; }
+      }
+
+      if(!code){
+        btn.disabled = false;
+        alert("حاول مرة ثانية");
+        return;
+      }
+
+      const presenterKey = randomKey();
+
+      const room = {
+        code,
+        name,
+        maxPlayers: players,
+        presenterKey,
+        status: "lobby",
+        createdAt: Date.now(),
+        activeMap: 0,
+        freeze: false,
+        buzzer: null,
+        current: { letter: null, qIndex: 0, row: null, col: null, map: 0 },
+        players: {},
+        // (اختياري) ما يضر لو موجود
+        scores: { orange: 0, green: 0 }
+      };
+
+      await set(ref(db, `rooms/${code}`), room);
+
+      // يودّي المقدم مباشرة لصفحة اختيار الفريقين (داخل game.html)
+      location.href = `game.html?role=host&code=${encodeURIComponent(code)}&key=${encodeURIComponent(presenterKey)}`;
     }
 
-    startBtn.addEventListener("click", async () => {
-      hideErr(); hideOk();
-      startBtn.disabled = true;
-      startBtn.textContent = "جاري الإنشاء...";
-      try{
-        await createRoom();
-        showOk("تم إنشاء اللعبة");
-      }catch(e){
-        showErr(e?.message || "حصل خطأ غير متوقع");
-        startBtn.disabled = false;
-        startBtn.textContent = "ابدأ اللعبة";
-      }
-    });
+    document.getElementById("btn").addEventListener("click", createRoom);
   </script>
 </body>
 </html>
