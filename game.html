@@ -23,7 +23,7 @@
 
     body{margin:0;background:var(--bg);font-family:Arial, sans-serif;color:#fff;text-align:center}
     header{position:relative;padding:14px 14px 0}
-    .logo{position:absolute;left:14px;top:14px;width:88px;height:88px;object-fit:contain}
+    .logo{position:absolute;left:14px;top:14px;width:56px;height:56px;object-fit:contain}
     .gameName{position:absolute;right:14px;top:20px;font-size:14px;opacity:.95}
     h1{margin:18px 0 10px;color:var(--yellow);font-size:28px}
     .wrap{width:95%;max-width:900px;margin:0 auto}
@@ -67,23 +67,12 @@
       border-radius:12px;
       overflow:hidden;
       background:transparent;
-
-      /* ✅ يمنع تكبير/تصغير المتصفح عند النقر/الدبل-تاب على الخريطة */
-      touch-action: none;
-      -webkit-user-select:none;
-      user-select:none;
-      -webkit-touch-callout:none;
     }
     .mapBox img{
       width:100%;
       height:auto;
       display:block;
       object-fit:unset;
-
-      touch-action: none;
-      -webkit-user-select:none;
-      user-select:none;
-      -webkit-touch-callout:none;
     }
 
     .overlaySvg{
@@ -92,11 +81,6 @@
       width:100%;
       height:100%;
       pointer-events:auto;
-
-      touch-action: none;
-      -webkit-user-select:none;
-      user-select:none;
-      -webkit-touch-callout:none;
     }
     .overlaySvg .cell{
       cursor:pointer;
@@ -152,11 +136,41 @@
       padding:14px;border:none;border-radius:12px;background:var(--yellow);cursor:pointer;color:#000;font-size:18px
     }
     a{color:inherit}
+
+    /* ✅ Timer UI */
+    .timerSelect{
+      padding:12px 10px;
+      font-size:16px;
+      border-radius:10px;
+      border:0;
+      background:#fff;
+      color:#111;
+      min-width:120px;
+    }
+    .timerCircle{
+      width:56px;height:56px;
+      border-radius:50%;
+      padding:0;
+      display:flex;
+      align-items:center;
+      justify-content:center;
+      font-weight:bold;
+      user-select:none;
+    }
+    @keyframes timerFlash {
+      0%   { background: var(--red); color:#fff; }
+      50%  { background: var(--yellow); color:#000; }
+      100% { background: var(--red); color:#fff; }
+    }
+    .timerFlashing{
+      animation: timerFlash .6s linear infinite;
+    }
   </style>
 </head>
 <body>
   <header>
-    <img class="logo" src="" alt="">
+    <!-- ✅ إظهار اللوقو دائماً -->
+    <img class="logo" src="logo.png" alt="شعار صندوق المسابقات">
     <div id="gameName" class="gameName"></div>
     <h1>سباق الحروف</h1>
   </header>
@@ -475,7 +489,7 @@
       { q: "من هي ابنة الرسول صلى الله عليه وسلم التي تزوجها عثمان بن عفان؟", a: "رقية" },
       { q: "ما هو الأجر المدفوع لقاء عمل معين وفي وقت محدد؟", a: "راتب" },
       { q: "شىء تفرزه الزهرة ؟", a: "رحيق" },
-      { q: "من الازهار ورد في القران الكريم ؟", a: "ريحان" },
+      { q: "من الازهار ورد في القران الكريم ?", a: "ريحان" },
       { q: "إذا دخل أحدكم المسجد فلا يجلس حتى يصلي؟", a: "ركعتين" },
       { q: "جبل عرفات هو جبل الـــ....؟", a: "الرحمة" },
       { q: "هدف تسعى الحكومات لتحقيقه لشعوبها؟", a: "رفاهية" },
@@ -664,7 +678,7 @@
       { q: "ما اسم المكسرات التي تُستخدم في الحلويات", a: "لوز" }
     ];
 
-    // حرف خ ✅
+    // ✅ حرف خ (الإضافة المطلوبة)
     QUESTIONS["خ"] = [
       { q: "هو لقب أطلق على النبي إبراهيم.", a: "خليل الله" },
       { q: "ماهي الأرض التي فتحها المسلمون في عهد النبي بعد معركة قصيرة مع اليهود؟", a: "خيبر" },
@@ -782,6 +796,63 @@
       return pts.map(p => `${p[0].toFixed(2)},${p[1].toFixed(2)}`).join(" ");
     }
 
+    /* ✅ Timer state (محلي للمقدم حتى ما ينهار مع إعادة الرسم) */
+    let TIMER_RUNNING = false;
+    let TIMER_DONE = false;
+    let TIMER_SELECTED = 10;
+    let TIMER_REMAINING = 10;
+    let TIMER_INTERVAL = null;
+
+    /* ✅ Zoom state (محلي حتى ما يرجع 1 بعد أي تحديث) */
+    let ZOOM_VALUE = 1;
+
+    function beep(){
+      try{
+        const AC = window.AudioContext || window.webkitAudioContext;
+        if(!AC) return;
+        const ctx = new AC();
+        const o = ctx.createOscillator();
+        const g = ctx.createGain();
+        o.type = "sine";
+        o.frequency.value = 880;
+        g.gain.value = 0.12;
+        o.connect(g); g.connect(ctx.destination);
+        o.start();
+        setTimeout(() => {
+          o.stop();
+          ctx.close();
+        }, 300);
+      }catch(e){}
+    }
+
+    function stopTimer(){
+      if(TIMER_INTERVAL){
+        clearInterval(TIMER_INTERVAL);
+        TIMER_INTERVAL = null;
+      }
+      TIMER_RUNNING = false;
+    }
+
+    function applyTimerUI(){
+      const sel = document.getElementById("timerSelect");
+      const btn = document.getElementById("timerBtn");
+      if(!sel || !btn) return;
+
+      sel.value = String(TIMER_SELECTED);
+
+      if(TIMER_DONE){
+        btn.classList.add("timerFlashing");
+      }else{
+        btn.classList.remove("timerFlashing");
+      }
+
+      if(TIMER_RUNNING){
+        btn.textContent = String(TIMER_REMAINING);
+      }else{
+        btn.textContent = String(TIMER_SELECTED);
+      }
+    }
+
     function renderHostLobby(room){
       const players = room.players || {};
       const list = Object.entries(players).map(([id,p]) => ({id, ...p}));
@@ -881,7 +952,20 @@
         <div class="below">
           <div class="buzzRow" style="flex:1;min-width:260px">
             <div id="buzzBox" class="buzzBox buzzEmpty">—</div>
-            ${isHost ? `<button id="nextQ" class="btn btnYellow nextQBtn">تغيير السؤال</button>` : ""}
+
+            ${isHost ? `
+              <button id="nextQ" class="btn btnYellow nextQBtn">تغيير السؤال</button>
+
+              <select id="timerSelect" class="timerSelect">
+                <option value="10">10 ث</option>
+                <option value="15">15 ث</option>
+                <option value="20">20 ث</option>
+                <option value="25">25 ث</option>
+                <option value="30">30 ث</option>
+              </select>
+
+              <button id="timerBtn" class="btn btnOrange timerCircle">10</button>
+            ` : ""}
           </div>
 
           ${isHost ? `
@@ -910,20 +994,9 @@
       const overlay = document.getElementById("overlay");
       const mapScale = document.getElementById("mapScale");
       const zoom = document.getElementById("zoom");
-      const mapBox = document.getElementById("mapBox");
 
-      // ✅ منع تغيّر حجم/زووم المتصفح عند النقر/الدبل-تاب على الخريطة
-      if(mapBox){
-        mapBox.addEventListener("dblclick", (e) => e.preventDefault());
-        let __lastTouchEnd = 0;
-        mapBox.addEventListener("touchend", (e) => {
-          const now = Date.now();
-          if(now - __lastTouchEnd <= 300){
-            e.preventDefault();
-          }
-          __lastTouchEnd = now;
-        }, { passive:false });
-      }
+      zoom.value = String(ZOOM_VALUE);
+      mapScale.style.setProperty("--zoom", String(ZOOM_VALUE));
 
       const activeMap = Number(room.activeMap || 0);
 
@@ -951,6 +1024,20 @@
       }
 
       overlay.style.pointerEvents = isHost ? "auto" : "none";
+
+      function applyZoomFix(){
+        const mapBox = document.getElementById("mapBox");
+        const mapOuter = document.querySelector(".mapOuter");
+        if(!mapBox || !mapOuter) return;
+
+        const z = Number(zoom.value || 1);
+        mapScale.style.setProperty("--zoom", z);
+
+        // ✅ إضافة مساحة تحت الخريطة حسب التكبير حتى ما تغطي الأزرار
+        const baseH = mapBox.offsetHeight || 0; // غير متأثر بالـ transform
+        const extra = Math.max(0, baseH * (z - 1));
+        mapOuter.style.marginBottom = `${extra}px`;
+      }
 
       function placeHexes(){
         const W = mapImg.clientWidth;
@@ -984,6 +1071,8 @@
             cells[i++].setAttribute("points", hexPointsPointyTop(left, top, w, h));
           }
         }
+
+        applyZoomFix();
       }
 
       function onMapReady(){
@@ -994,7 +1083,10 @@
       if(mapImg.complete) onMapReady();
       else mapImg.addEventListener("load", onMapReady, { once:true });
 
-      window.addEventListener("resize", placeHexes);
+      window.addEventListener("resize", () => {
+        placeHexes();
+        applyZoomFix();
+      });
 
       const mapStates = (room.mapStates && room.mapStates[String(activeMap)]) ? room.mapStates[String(activeMap)] : {};
       overlay.querySelectorAll(".cell").forEach(cell => {
@@ -1042,7 +1134,8 @@
       }
 
       zoom.addEventListener("input", () => {
-        mapScale.style.setProperty("--zoom", zoom.value);
+        ZOOM_VALUE = Number(zoom.value || 1);
+        applyZoomFix();
       });
 
       const mapBtn = document.getElementById("mapBtn");
@@ -1075,6 +1168,66 @@
           const nextIndex = (Number(cur.qIndex || 0) + 1) % list.length;
           await update(roomRef, { current: { ...cur, qIndex: nextIndex } });
         });
+      }
+
+      // ✅ Timer handlers (للمقدم فقط)
+      const timerSelect = document.getElementById("timerSelect");
+      const timerBtn = document.getElementById("timerBtn");
+      if(timerSelect && timerBtn){
+        timerSelect.addEventListener("change", () => {
+          TIMER_SELECTED = Number(timerSelect.value || 10);
+          if(!TIMER_RUNNING && !TIMER_DONE){
+            TIMER_REMAINING = TIMER_SELECTED;
+          }
+          applyTimerUI();
+        });
+
+        timerBtn.addEventListener("click", () => {
+          // إذا كان منتهي ويومّض: رجّعه لوضع الاستعداد
+          if(TIMER_DONE){
+            TIMER_DONE = false;
+            stopTimer();
+            TIMER_REMAINING = TIMER_SELECTED;
+            applyTimerUI();
+            return;
+          }
+
+          // إذا شغال: أوقفه وأرجعه
+          if(TIMER_RUNNING){
+            stopTimer();
+            TIMER_REMAINING = TIMER_SELECTED;
+            applyTimerUI();
+            return;
+          }
+
+          // ابدأ
+          TIMER_RUNNING = true;
+          TIMER_DONE = false;
+          TIMER_REMAINING = TIMER_SELECTED;
+          applyTimerUI();
+
+          TIMER_INTERVAL = setInterval(() => {
+            TIMER_REMAINING -= 1;
+
+            const btn = document.getElementById("timerBtn");
+            if(btn) btn.textContent = String(Math.max(0, TIMER_REMAINING));
+
+            if(TIMER_REMAINING <= 0){
+              stopTimer();
+              TIMER_DONE = true;
+
+              const b = document.getElementById("timerBtn");
+              if(b){
+                b.textContent = "0";
+                b.classList.add("timerFlashing");
+              }
+
+              beep();
+            }
+          }, 1000);
+        });
+
+        applyTimerUI();
       }
 
       // ✅ عند ضغط المقدم على السداسي: يحدد الحرف الصحيح من MAPS لنفس الخريطة الحالية
