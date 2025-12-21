@@ -23,8 +23,7 @@
 
     body{margin:0;background:var(--bg);font-family:Arial, sans-serif;color:#fff;text-align:center}
     header{position:relative;padding:14px 14px 0}
-    /* ✅ تكبير بسيط للّوجو */
-    .logo{position:absolute;left:14px;top:14px;width:56px;height:56px;object-fit:contain}
+    .logo{position:absolute;left:14px;top:14px;width:44px;height:44px;object-fit:contain}
     .gameName{position:absolute;right:14px;top:20px;font-size:14px;opacity:.95}
     h1{margin:18px 0 10px;color:var(--yellow);font-size:28px}
     .wrap{width:95%;max-width:900px;margin:0 auto}
@@ -53,47 +52,6 @@
     .playerItem{
       background:rgba(255,255,255,.18);
       padding:8px;border-radius:10px;margin:6px 0;cursor:pointer
-    }
-
-    /* ✅ لوحة النتائج */
-    .scoreBar{
-      display:flex;gap:10px;flex-wrap:wrap;
-      justify-content:center;align-items:center;
-      margin:6px 0 10px;
-    }
-    .scoreLabel{
-      font-weight:bold;
-      color:#fff;
-      opacity:.98;
-      font-size:16px;
-      white-space:nowrap;
-    }
-    .scoreBox{
-      width:64px;min-width:64px;
-      height:40px;
-      border-radius:12px;
-      background:#fff;
-      color:#111;
-      display:flex;
-      align-items:center;
-      justify-content:center;
-      font-weight:bold;
-      font-size:20px;
-      box-shadow:0 8px 18px rgba(0,0,0,.12);
-      user-select:none;
-    }
-    .scoreInc{
-      width:40px;height:40px;
-      border-radius:12px;
-      border:0;
-      cursor:pointer;
-      background:rgba(255,255,255,.20);
-      color:#fff;
-      font-size:22px;
-      font-weight:bold;
-      display:flex;
-      align-items:center;
-      justify-content:center;
     }
 
     /* MAP */
@@ -208,41 +166,120 @@
       animation: timerFlash .6s linear infinite;
     }
 
-    /* ✅ مربع المتجر (للاعب فقط) */
-    .buyBox{
-      width:min(92vw, 520px);
-      margin:12px auto 0;
-      border-radius:16px;
-      padding:14px;
-      background:rgba(255,255,255,.14);
-      border:1px solid rgba(244,196,0,.75);
-      box-shadow:0 0 0 2px rgba(244,196,0,.18), 0 12px 26px rgba(0,0,0,.14);
+    /* ✅ لوحة النتائج */
+    .scoreBar{
+      width:100%;
+      display:flex;
+      justify-content:center;
+      align-items:center;
+      gap:12px;
+      margin:10px 0 8px;
+      flex-wrap:wrap;
+    }
+    .teamLabel{
+      font-weight:bold;
+      font-size:14px;
       color:#fff;
+      padding:6px 10px;
+      border-radius:10px;
+      white-space:nowrap;
     }
-    .buyTitle{
-      color:var(--yellow);
-      font-weight:bold;
-      font-size:16px;
-      margin-bottom:8px;
-    }
-    .buyLink{
-      display:inline-block;
-      background:var(--yellow);
-      color:#000;
-      text-decoration:none;
-      font-weight:bold;
-      padding:10px 14px;
+    .teamLabel.green{ background: rgba(26,163,74,.95); }
+    .teamLabel.orange{ background: rgba(242,140,0,.95); }
+
+    .scoreBoxBtn{
+      min-width:64px;
+      height:44px;
       border-radius:12px;
+      border:none;
+      background:#fff;
+      color:#111;
+      font-size:22px;
+      font-weight:bold;
+      cursor:default;
     }
-    .buySub{
-      margin-top:8px;
+    .scoreBoxBtn.hostClickable{
+      cursor:pointer;
+      box-shadow: 0 2px 0 rgba(0,0,0,.12);
+    }
+    .scoreHint{
       font-size:12px;
-      opacity:.95;
+      opacity:.85;
+      margin-top:4px;
+    }
+
+    /* ✅ نافذة المشاركة */
+    .shareBackdrop{
+      position:fixed;
+      inset:0;
+      background:rgba(0,0,0,.45);
+      display:none;
+      align-items:center;
+      justify-content:center;
+      z-index:9999;
+      padding:14px;
+      box-sizing:border-box;
+    }
+    .shareModal{
+      width:min(92vw, 520px);
+      background:#fff;
+      color:#111;
+      border-radius:14px;
+      padding:14px;
+      text-align:right;
+      position:relative;
+      box-sizing:border-box;
+    }
+    .shareClose{
+      position:absolute;
+      left:10px;
+      top:10px;
+      border:none;
+      background:transparent;
+      font-size:22px;
+      cursor:pointer;
+      line-height:1;
+    }
+    .shareTitle{
+      font-weight:bold;
+      margin:0 0 10px;
+      text-align:center;
+    }
+    .shareChoices{display:flex;gap:10px;flex-wrap:wrap;justify-content:center;margin:10px 0 8px}
+    .sharePanel{
+      display:none;
+      background:rgba(31,79,163,.06);
+      border:1px solid rgba(0,0,0,.08);
+      border-radius:12px;
+      padding:12px;
+      text-align:center;
+    }
+    .shareCodeBig{
+      font-size:34px;
+      font-weight:bold;
+      letter-spacing:2px;
+      text-align:center;
+      margin:6px 0 0;
+    }
+    .qrImg{
+      width:220px;height:220px;
+      display:block;
+      margin:0 auto;
+      border-radius:10px;
+      background:#fff;
+    }
+    .shareSmall{
+      font-size:12px;
+      opacity:.85;
+      text-align:center;
+      margin-top:8px;
+      word-break:break-all;
     }
   </style>
 </head>
 <body>
   <header>
+    <!-- ✅ إظهار اللوقو دائماً -->
     <img class="logo" src="logo.png" alt="شعار صندوق المسابقات">
     <div id="gameName" class="gameName"></div>
     <h1>سباق الحروف</h1>
@@ -269,6 +306,7 @@
 
     // ✅ (نفس اللي عندك) لا تغيّر الخرائط ولا أماكن الحروف
     const MAPS = [
+      // map1
       [
         ["ش","أ","ث","د","هـ"],
         ["ي","ح","ض","ن","ك"],
@@ -276,6 +314,7 @@
         ["ص","ز","س","ط","و"],
         ["ذ","ل","ب","م","ج"]
       ],
+      // map2
       [
         ["ق","ص","و","د","ب"],
         ["ح","ي","ض","هـ","ث"],
@@ -283,6 +322,7 @@
         ["أ","ر","س","ظ","ث"],
         ["ذ","غ","هـ","ع","ج"]
       ],
+      // map3
       [
         ["ذ","ج","أ","ب","ر"],
         ["ي","ح","ز","ل","س"],
@@ -293,6 +333,8 @@
     ];
 
     // ✅ هيكلة الأسئلة الجديدة: لكل حرف 25 عنصر (سؤال + جواب)
+    // حالياً مولّد تلقائياً (عشان تتأكد أن الربط صار صح 100%)
+    // بعدين نستبدله بأسئلتك الحقيقية حرف-حرف.
     const QUESTIONS = {};
     const ALL_LETTERS = Array.from(new Set(MAPS.flat(2)));
     for(const L of ALL_LETTERS){
@@ -302,7 +344,7 @@
       }));
     }
 
-    /* ====== (نفس أسئلتك بدون تغيير) ====== */
+    // حرف هـ
     QUESTIONS["هـ"] = [
       { q: "هي البنيه او الاطار الذي يستخدم لدعم شيئ ما ويمكن ان يكون معنوياً مثل المباني او معنوياً مثل (……..)", a: "هيكل" },
       { q: "هو مايهدى من الانعام الى الحرم تقرباً الى الله", a: "هدي" },
@@ -331,6 +373,7 @@
       { q: "هو ممر مائي ضيق يربط الخليج العربي بخليج عُمان يسمى مضيق ……..؟", a: "هرمز" }
     ];
 
+    // حرف د
     QUESTIONS["د"] = [
       { q: "هي قول يطلب به الإنسان إثبات حق على على الغير في المحاكم", a: "دعوى" },
       { q: "من هو مخترع الاطارات المنفوخة للسيارات", a: "جون بويد دنلوب" },
@@ -359,6 +402,7 @@
       { q: "هي مرادف كلمة ……إشارة", a: "دلالة" }
     ];
 
+    // حرف أ
     QUESTIONS["أ"] = [
       { q: "وحدة لقياس شدة التيار الكهربائي", a: "أمبير" },
       { q: "من هو اول من جمع القرآن الكريم بين لوحين", a: "ابو بكر الصديق" },
@@ -387,6 +431,7 @@
       { q: "ماهو معنى كلمة إماطة", a: "إزالة" }
     ];
 
+    // حرف ث
     QUESTIONS["ث"] = [
       { q: "ماهو عدد الحروف في الأبجدية العربية", a: "ثمانية وعشرون حرفاً" },
       { q: "صفة من أهم صفات الشجاعة", a: "ثبات" },
@@ -414,6 +459,7 @@
       { q: "هو عكس كلمة متحرك", a: "ثابت" }
     ];
 
+    // حرف ش
     QUESTIONS["ش"] = [
       { q: "هو يستعمل لتثبيت الشموع فيه للزينة", a: "شمعدان" },
       { q: "هو الماء الجاري والمتساقط من الجبل", a: "شلال" },
@@ -442,6 +488,7 @@
       { q: "هي مجموعة من العلوم الدينية التي تدرس وتفهم وتطبق أحكام الإسلام", a: "شريعة" }
     ];
 
+    // حرف ك
     QUESTIONS["ك"] = [
       { q: "ماهو العنصر الكيميائي الذي له الرمز C", a: "كربون" },
       { q: "صفه اخرجت ابليس من الجنة", a: "الكبر" },
@@ -470,6 +517,7 @@
       { q: "ماهو عكس كلمة قليل", a: "كثير" }
     ];
 
+    // حرف ن
     QUESTIONS["ن"] = [
       { q: "بماذا يُلقب المنتخب التونسي", a: "نسور قرطاج" },
       { q: "بماذا تسمى الرغبة في النوم او النوم الخفيف", a: "نعاس" },
@@ -483,6 +531,7 @@
       { q: "هو السائل الزيتي الذي يشتق منه أنواع الوقود", a: "نفط" }
     ];
 
+    // حرف ض
     QUESTIONS["ض"] = [
       { q: "هي الاحتياج الشديد الذي يُحمل الإنسان على ما فيه ضرر", a: "ضرورة" },
       { q: "هي الحالة النفسية التي يشعر فيها الإنسان بانقباضٍ وعدم ارتياح", a: "ضيق" },
@@ -501,6 +550,7 @@
       { q: "هو مصطلح يشير إلى الأصوات العالية المزعجة والمشتتة", a: "ضوضاء" }
     ];
 
+    // حرف ح
     QUESTIONS["ح"] = [
       { q: "هي صفة تدل على ضبط النفس، والتأني، وعدم التسرع", a: "حلم" },
       { q: "هي المنطقة الجبلية في غرب شبه الجزيرة العربية والتي تضم مكة والمدينة", a: "حجاز" },
@@ -514,6 +564,7 @@
       { q: "ما هي الكلمة التي تعني زحف المولود الصغير", a: "حبو" }
     ];
 
+    // حرف ي
     QUESTIONS["ي"] = [
       { q: "هو طائر يرمز بشكل أساسي إلى السلام والمحبة والوفاء والأمل والتجديد", a: "يمامه" },
       { q: "هي الحضارة القديمة التي اشتهرت بفلسفة أرسطو وأفلاطون", a: "يونان" },
@@ -527,6 +578,7 @@
       { q: "يتعود على بيئة غير بيئته الأولى؟", a: "يتكيف" }
     ];
 
+    // حرف ع
     QUESTIONS["ع"] = [
       { q: "من الصحف المحلية المعروفة في المملكة؟", a: "عكاظ" },
       { q: "ما اسم الأوعية الدموية التي تحمل الدم بعيدًا عن القلب؟", a: "عروق" },
@@ -540,6 +592,7 @@
       { q: "ما اسم المفهوم الذي يعني المساواة وعدم التمييز بين الناس؟", a: "عدالة" }
     ];
 
+    // حرف ر
     QUESTIONS["ر"] = [
       { q: "ما هو الحيوان الصغير الذكي الذي يتميز بقناع أسود حول عينيه؟", a: "راكون" },
       { q: "ما هي الكلمة التي تبدأ بحرف الراء وتعني سيد القوم؟", a: "رئيس" },
@@ -553,6 +606,7 @@
       { q: "هو افضل لاعب كرة قدم في البرتغال؟", a: "رونالدو" }
     ];
 
+    // حرف ق
     QUESTIONS["ق"] = [
       { q: "ما ما اسمُ البِهِارَةِ العطريّةِ التي تُستخرَجُ من لحاءِ شجرةٍ", a: "قرفه" },
       { q: "كان يطلق على البحر الاحمر قديما بحر ال ـــــ ؟", a: "قلزم" },
@@ -566,6 +620,7 @@
       { q: "في التاريخ، لقب أباطرة الرومان وبيزنطة.", a: "قياصره" }
     ];
 
+    // حرف ظ
     QUESTIONS["ظ"] = [
       { q: "ما الحالة التي تدل على غياب الضوء وانتشار العتمة؟", a: "ظلام" },
       { q: "ما الاسم الدالّ على التوقع والترجيح بلا يقين؟", a: "ظن" },
@@ -579,6 +634,7 @@
       { q: "ما المحافظة العُمانيّة الواقعة جنوب السلطنة وتشتهر بخريفها؟", a: "ظفار" }
     ];
 
+    // حرف غ
     QUESTIONS["غ"] = [
       { q: "إعانة ونصرة في الشدة؟", a: "غوث" },
       { q: "تكوين عظمي قليل الصلابة مثل ذلك الذي يوجد في الأنف وعظام المفاصل؟", a: "غضروف" },
@@ -592,6 +648,7 @@
       { q: "ما الكلمة العربية التي تشير إلى الفترة الصباحية الباكرة؟", a: "غداً" }
     ];
 
+    // حرف و (الإضافة الجديدة فقط)
     QUESTIONS["و"] = [
       { q: "انتقال الصفات المميزة؟", a: "وراثة" },
       { q: "إدراك الشخص إدراكا عاما بما يجري حوله في لحظة معينة؟", a: "وعي" },
@@ -605,6 +662,7 @@
       { q: "أكمل المثل الشعبي: \"فص ملح...\"؟", a: "وذاب" }
     ];
 
+    // حرف ط ✅
     QUESTIONS["ط"] = [
       { q: "ما المصطلح العسكري الذي يشير إلى تجمع الجنود في صفوف منظمة", a: "طابور" },
       { q: "ما الوعاء المعدني الصغير الذي يُستخدَم للشرب أو الكيل في المطابخ العربية؟", a: "طاسه" },
@@ -618,6 +676,7 @@
       { q: "ما الغطاء التقليدي للرأس الذي اشتهر في بلدان الشام", a: "طربوش" }
     ];
 
+    // حرف س
     QUESTIONS["س"] = [
       { q: "هي دولة عربية على تطل على بحر العرب", a: "سلطنة عمان" },
       { q: "ما الاسم القرآني الذي يُطلَق على يوم القيامة؟", a: "ساعة" },
@@ -631,6 +690,7 @@
       { q: "ما هي الدولة المدينة الواقعة جنوب شرق آسيا وتُعد من أصغر الدول مساحةً؟", a: "سنغافورة" }
     ];
 
+    // حرف ز
     QUESTIONS["ز"] = [
       { q: "ما هو الجزء من جسم الإنسان الذي قد يُصاب بالتهاب ويستلزم استئصالًا؟", a: "زائدة دودية" },
       { q: "الرفيق في العمل أو السفر؟", a: "زميل" },
@@ -644,6 +704,7 @@
       { q: "قبيلة في المملكة العربية.", a: "زهران" }
     ];
 
+    // حرف ص
     QUESTIONS["ص"] = [
       { q: "يُطلَق على الشخص المختص بإعداد الأدوية", a: "صيدلي" },
       { q: "أين تُحفَظ الأموال والأشياء الثمينة داخل البنوك؟", a: "صندوق الامانات" },
@@ -657,6 +718,7 @@
       { q: "مادة لاصقة تُستخرَج من بعض الأشجار", a: "صمغ" }
     ];
 
+    // حرف ج
     QUESTIONS["ج"] = [
       { q: "ما المصطلح الشرعي الذي يشير إلى الذنب أو الخطأ الذي يستحق عقوبة؟", a: "جريمة" },
       { q: "ما الجزيرة الواقعة غرب المملكة العربية السعودية وتعدّ من أبرز الوجهات السياحية على البحر الأحمر؟", a: "جزيرة فرسان" },
@@ -670,6 +732,7 @@
       { q: "إحدى المستعمرات البريطانية جنوب إسبانيا، تقع على مضيق يصل بين البحر المتوسط والمحيط الأطلسي", a: "جبل طارق" }
     ];
 
+    // حرف م
     QUESTIONS["م"] = [
       { q: "هو  عضو في جسم الإنسان يتحكم في الذاكرة؟", a: "مخ" },
       { q: "هو مكان يعرض فيه الاشياء الفنية والاثرية", a: "متحف" },
@@ -683,6 +746,7 @@
       { q: "ما نهى عنه الشارع دون تشديد وهو أقل من الحرام في رتبته؟.", a: "مكروه" }
     ];
 
+    // حرف ب
     QUESTIONS["ب"] = [
       { q: "ما الكلمة التي تعني الأخذ بالعنف والشدة؟", a: "بطش" },
       { q: "أي بحر يقع بين قارتي أوروبا وإفريقيا؟", a: "بحر المتوسط" },
@@ -696,6 +760,7 @@
       { q: "مجموعة خلايا وأعمدة كهربائية متصل بعضها ببعض لتوليد طاقة كهربائية؟", a: "بطارية" }
     ];
 
+    // حرف ل
     QUESTIONS["ل"] = [
       { q: "عباره عن حديدةٌ وما يتَّصل بها تُوضع في فم الحصان أو البَغْل أو الحمار لقيادتها.؟", a: "لجام" },
       { q: "ما اسم اللوحة الفنية التي رسمها ليوناردو دا فينشي؟", a: "موناليزا" },
@@ -709,6 +774,7 @@
       { q: "ما اسم المكسرات التي تُستخدم في الحلويات", a: "لوز" }
     ];
 
+    // حرف ذ
     QUESTIONS["ذ"] = [
       { q: "ما القيمة الأخلاقية التي تعني الوفاء بالعهد وحفظ الحقوق والأمانة؟", a: "ذمة" },
       { q: "ما الصفة العقلية التي تدلّ على سرعة البديهة وحسن الفهم؟", a: "ذكاء" },
@@ -722,6 +788,7 @@
       { q: "ما اسم المكسرات التي تُستخدم في الحلويات", a: "لوز" }
     ];
 
+    // ✅ حرف خ (الإضافة المطلوبة)
     QUESTIONS["خ"] = [
       { q: "هو لقب أطلق على النبي إبراهيم.", a: "خليل الله" },
       { q: "ماهي الأرض التي فتحها المسلمون في عهد النبي بعد معركة قصيرة مع اليهود؟", a: "خيبر" },
@@ -734,7 +801,6 @@
       { q: "ما الفعل الذي يعني الاستسلام والخضوع مع انعدام المقاومة؟", a: "خنوع" },
       { q: "هو بمعنى فقد بعض ما عنده؟", a: "خسر" }
     ];
-    /* ====== نهاية الأسئلة ====== */
 
     const app = initializeApp(firebaseConfig);
     const db = getDatabase(app);
@@ -847,9 +913,6 @@
     let TIMER_REMAINING = 10;
     let TIMER_INTERVAL = null;
 
-    /* ✅ حفظ الزوم محلياً حتى لا يرجع للأصلي بعد الضغط */
-    let ZOOM_VALUE = 1;
-
     function beep(){
       try{
         const AC = window.AudioContext || window.webkitAudioContext;
@@ -897,6 +960,17 @@
       }
     }
 
+    /* ✅ (إصلاح المشاركة) */
+    function buildJoinUrl(roomCode){
+      const u = new URL("join.html", location.href);
+      u.searchParams.set("code", roomCode);
+      return u.toString();
+    }
+    function buildQrUrl(dataUrl){
+      const size = "220x220";
+      return `https://api.qrserver.com/v1/create-qr-code/?size=${size}&data=${encodeURIComponent(dataUrl)}`;
+    }
+
     function renderHostLobby(room){
       const players = room.players || {};
       const list = Object.entries(players).map(([id,p]) => ({id, ...p}));
@@ -924,8 +998,37 @@
 
         <div style="height:12px"></div>
 
-        <button id="startBtn" class="btn btnGreen">ابدأ اللعبة</button>
+        <!-- ✅ زر مشاركة اللعبة (المطلوب) -->
+        <div class="row">
+          <button id="shareBtn" class="btn btnYellow">مشاركة اللعبة للاعبين</button>
+          <button id="startBtn" class="btn btnGreen">ابدأ اللعبة</button>
+        </div>
+
         <div class="smallNote">يمكنك الضغط على اسم لاعب لنقله للفريق الآخر</div>
+
+        <!-- ✅ نافذة المشاركة -->
+        <div id="shareBackdrop" class="shareBackdrop">
+          <div class="shareModal">
+            <button id="shareClose" class="shareClose" aria-label="إغلاق">×</button>
+            <div class="shareTitle">مشاركة اللعبة</div>
+
+            <div class="shareChoices">
+              <button id="shareQrBtn" class="btn btnOrange">مشاركة عبر الباركود</button>
+              <button id="shareCodeBtn" class="btn btnGreen">مشاركة عبر الرمز</button>
+            </div>
+
+            <div id="shareQrPanel" class="sharePanel">
+              <img id="qrImg" class="qrImg" alt="QR">
+              <div class="shareSmall" id="joinUrlTxt"></div>
+              <div class="shareSmall">امسح الباركود أو افتح الرابط للانتقال لصفحة كتابة الاسم</div>
+            </div>
+
+            <div id="shareCodePanel" class="sharePanel">
+              <div class="codeBox" style="text-align:center">رمز الغرفة</div>
+              <div class="shareCodeBig">${escapeHtml(room.code)}</div>
+            </div>
+          </div>
+        </div>
       `;
 
       const greenList = document.getElementById("greenList");
@@ -956,6 +1059,48 @@
           current: { letter: null, qIndex: 0, row: null, col: null, map: 0 }
         });
       });
+
+      /* ✅ (إصلاح زر المشاركة) */
+      const shareBackdrop = document.getElementById("shareBackdrop");
+      const shareBtn = document.getElementById("shareBtn");
+      const shareClose = document.getElementById("shareClose");
+      const shareQrBtn = document.getElementById("shareQrBtn");
+      const shareCodeBtn = document.getElementById("shareCodeBtn");
+      const shareQrPanel = document.getElementById("shareQrPanel");
+      const shareCodePanel = document.getElementById("shareCodePanel");
+      const qrImg = document.getElementById("qrImg");
+      const joinUrlTxt = document.getElementById("joinUrlTxt");
+
+      const joinUrl = buildJoinUrl(room.code);
+      const qrUrl = buildQrUrl(joinUrl);
+
+      function openShare(){
+        shareBackdrop.style.display = "flex";
+        // افتراضي: أظهر الرمز
+        shareQrPanel.style.display = "none";
+        shareCodePanel.style.display = "block";
+      }
+      function closeShare(){
+        shareBackdrop.style.display = "none";
+      }
+
+      shareBtn.addEventListener("click", openShare);
+      shareClose.addEventListener("click", closeShare);
+      shareBackdrop.addEventListener("click", (e) => {
+        if(e.target === shareBackdrop) closeShare();
+      });
+
+      shareQrBtn.addEventListener("click", () => {
+        shareCodePanel.style.display = "none";
+        shareQrPanel.style.display = "block";
+        qrImg.src = qrUrl;
+        joinUrlTxt.textContent = joinUrl;
+      });
+
+      shareCodeBtn.addEventListener("click", () => {
+        shareQrPanel.style.display = "none";
+        shareCodePanel.style.display = "block";
+      });
     }
 
     function renderWaiting(msg){
@@ -969,8 +1114,8 @@
       const started = room.status === "started";
 
       const scores = room.scores || {};
-      const orangeScore = Number(scores.orange ?? 0);
-      const greenScore  = Number(scores.green ?? 0);
+      const scoreGreen = Number(scores.green || 0);
+      const scoreOrange = Number(scores.orange || 0);
 
       main.innerHTML = `
         <div class="row" style="justify-content:space-between">
@@ -978,19 +1123,18 @@
           <div></div>
         </div>
 
-        <!-- ✅ لوحة النتائج فوق الخريطة -->
+        <!-- ✅ لوحة النتائج (المطلوبة) -->
         <div class="scoreBar">
-          <div class="scoreLabel">الفريق البرتقالي</div>
-          <div id="scoreOrange" class="scoreBox">${orangeScore}</div>
-          ${isHost ? `<button id="incOrange" class="scoreInc">+</button>` : ``}
+          <span class="teamLabel orange">الفريق البرتقالي</span>
+          <button id="scoreOrangeBtn" class="scoreBoxBtn ${isHost ? "hostClickable" : ""}" ${isHost ? "" : "disabled"}>${scoreOrange}</button>
 
-          <div id="scoreGreen" class="scoreBox">${greenScore}</div>
-          ${isHost ? `<button id="incGreen" class="scoreInc">+</button>` : ``}
-          <div class="scoreLabel">الفريق الأخضر</div>
+          <button id="scoreGreenBtn" class="scoreBoxBtn ${isHost ? "hostClickable" : ""}" ${isHost ? "" : "disabled"}>${scoreGreen}</button>
+          <span class="teamLabel green">الفريق الأخضر</span>
         </div>
+        ${isHost ? `<div class="scoreHint">المقدم فقط: اضغط على النتيجة لإضافة نقطة</div>` : ``}
 
         <div class="mapOuter">
-          <div id="mapScale" class="mapScale" style="--zoom:${ZOOM_VALUE}">
+          <div id="mapScale" class="mapScale" style="--zoom:1">
             <div id="mapBox" class="mapBox">
               <img id="mapImg" src="" alt="">
               <svg id="overlay" class="overlaySvg"></svg>
@@ -1002,7 +1146,7 @@
         <div class="row" style="justify-content:space-between">
           <div class="row">
             ${isHost ? `<button id="mapBtn" class="btn btnYellow">تغيير الخريطة</button>` : ""}
-            <input id="zoom" type="range" min="0.8" max="1.35" step="0.01" value="${ZOOM_VALUE}" />
+            <input id="zoom" type="range" min="0.8" max="1.35" step="0.01" value="1" />
             ${isHost ? `<button id="freezeBtn" class="btn ${room.freeze ? "btnRed" : "btnGreen"}">${room.freeze ? "مجمّد" : "مفعل"}</button>` : ""}
           </div>
         </div>
@@ -1045,29 +1189,21 @@
           <div class="playerBtnWrap">
             <button id="buzzBtn" class="playerBigBtn"></button>
             <div class="smallNote">${started ? "اضغط للإجابة" : "بانتظار بدء اللعبة"}</div>
-
-            <!-- ✅ مربع المتجر تحت زر اللاعب -->
-            <div class="buyBox">
-              <div class="buyTitle">اشتري اللعبة الآن</div>
-              <a class="buyLink" href="https://sandooq-m.com" target="_blank" rel="noopener">الذهاب إلى متجر صندوق المسابقات</a>
-              <div class="buySub">هذا هو رابط المتجر الرسمي الذي ينقلك لصفحة المتجر لشراء اللعبة.</div>
-            </div>
           </div>
         ` : ""}
       `;
 
-      /* ✅ تحكم النقاط (المقدم فقط) */
-      const incOrange = document.getElementById("incOrange");
-      const incGreen  = document.getElementById("incGreen");
-      if(isHost && incOrange){
-        incOrange.addEventListener("click", async () => {
-          const r = ref(db, `rooms/${code}/scores/orange`);
+      /* ✅ (إصلاح احتساب النقاط للمقدم) */
+      const scoreGreenBtn = document.getElementById("scoreGreenBtn");
+      const scoreOrangeBtn = document.getElementById("scoreOrangeBtn");
+
+      if(isHost && scoreGreenBtn && scoreOrangeBtn){
+        scoreGreenBtn.addEventListener("click", async () => {
+          const r = ref(db, `rooms/${code}/scores/green`);
           await runTransaction(r, (cur) => (Number(cur || 0) + 1));
         });
-      }
-      if(isHost && incGreen){
-        incGreen.addEventListener("click", async () => {
-          const r = ref(db, `rooms/${code}/scores/green`);
+        scoreOrangeBtn.addEventListener("click", async () => {
+          const r = ref(db, `rooms/${code}/scores/orange`);
           await runTransaction(r, (cur) => (Number(cur || 0) + 1));
         });
       }
@@ -1079,6 +1215,7 @@
 
       const activeMap = Number(room.activeMap || 0);
 
+      // ✅ لا تغيّر ترتيب الصور (map1,map2,map3)
       const src = ([
         "maps/map1.jpeg",
         "maps/map2.jpeg",
@@ -1108,10 +1245,12 @@
         const mapOuter = document.querySelector(".mapOuter");
         if(!mapBox || !mapOuter) return;
 
-        mapScale.style.setProperty("--zoom", ZOOM_VALUE);
+        const z = Number(zoom.value || 1);
+        mapScale.style.setProperty("--zoom", z);
 
-        const baseH = mapBox.offsetHeight || 0;
-        const extra = Math.max(0, baseH * (ZOOM_VALUE - 1));
+        // ✅ إضافة مساحة تحت الخريطة حسب التكبير حتى ما تغطي الأزرار
+        const baseH = mapBox.offsetHeight || 0; // غير متأثر بالـ transform
+        const extra = Math.max(0, baseH * (z - 1));
         mapOuter.style.marginBottom = `${extra}px`;
       }
 
@@ -1186,6 +1325,7 @@
         buzzBox.textContent = "—";
       }
 
+      // ✅ عرض السؤال حسب الحرف الذي ضغطه المقدم
       if(isHost){
         const qText = document.getElementById("qText");
         const qAns  = document.getElementById("qAns");
@@ -1208,10 +1348,7 @@
         }
       }
 
-      /* ✅ حفظ الزوم وعدم الرجوع للأصلي */
-      applyZoomFix();
       zoom.addEventListener("input", () => {
-        ZOOM_VALUE = Number(zoom.value || 1);
         applyZoomFix();
       });
 
@@ -1234,6 +1371,7 @@
         });
       }
 
+      // ✅ تغيير السؤال لنفس الحرف المختار
       const nextQ = document.getElementById("nextQ");
       if(nextQ){
         nextQ.addEventListener("click", async () => {
@@ -1246,6 +1384,7 @@
         });
       }
 
+      // ✅ Timer handlers (للمقدم فقط)
       const timerSelect = document.getElementById("timerSelect");
       const timerBtn = document.getElementById("timerBtn");
       if(timerSelect && timerBtn){
@@ -1258,6 +1397,7 @@
         });
 
         timerBtn.addEventListener("click", () => {
+          // إذا كان منتهي ويومّض: رجّعه لوضع الاستعداد
           if(TIMER_DONE){
             TIMER_DONE = false;
             stopTimer();
@@ -1266,6 +1406,7 @@
             return;
           }
 
+          // إذا شغال: أوقفه وأرجعه
           if(TIMER_RUNNING){
             stopTimer();
             TIMER_REMAINING = TIMER_SELECTED;
@@ -1273,6 +1414,7 @@
             return;
           }
 
+          // ابدأ
           TIMER_RUNNING = true;
           TIMER_DONE = false;
           TIMER_REMAINING = TIMER_SELECTED;
@@ -1302,6 +1444,7 @@
         applyTimerUI();
       }
 
+      // ✅ عند ضغط المقدم على السداسي: يحدد الحرف الصحيح من MAPS لنفس الخريطة الحالية
       if(isHost){
         overlay.querySelectorAll(".cell").forEach(cell => {
           cell.addEventListener("click", async (e) => {
@@ -1315,7 +1458,7 @@
             const st = Number(mapStates?.[k] ?? 0);
             const next = (st + 1) % 4;
 
-            const letter = MAPS[activeMap][r][c];
+            const letter = MAPS[activeMap][r][c]; // ✅ هذا هو المفتاح
 
             const updates = {};
             updates[`rooms/${code}/mapStates/${activeMap}/${k}`] = next;
