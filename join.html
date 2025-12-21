@@ -10,28 +10,39 @@
       --yellow:#f4c400;
       --card:#ffffff;
       --text:#111;
+      --muted:#666;
+      --red:#c01818;
+      --green:#1aa34a;
     }
     body{margin:0;background:var(--bg);font-family:Arial, sans-serif;color:#fff;text-align:center}
-    header{position:relative;padding:30px 16px 0}
+    header{position:relative;padding:28px 16px 0}
     .logo{
       position:absolute;left:14px;top:14px;
-      width:86px;height:86px;object-fit:contain;
+      width:56px;height:56px;object-fit:contain;
       pointer-events:none;
     }
     h1{margin:18px 0 14px;color:var(--yellow);font-size:28px}
-    .wrap{width:92%;max-width:520px;margin:0 auto}
-    .card{background:var(--card);color:var(--text);border-radius:12px;padding:14px}
+    .wrap{width:92%;max-width:560px;margin:0 auto}
+    .card{background:var(--card);color:var(--text);border-radius:14px;padding:16px}
+
     input{
       width:100%;box-sizing:border-box;
-      padding:14px;margin:10px 0;
-      font-size:16px;border-radius:10px;border:0;
+      padding:14px 14px;margin:10px 0;
+      font-size:16px;border-radius:12px;border:0;
+      text-align:right;
+      background:#f7f7f7;
     }
-    button{
-      width:100%;padding:16px;margin-top:10px;
+
+    .btn{
+      width:100%;
+      padding:16px;margin-top:10px;
       font-size:18px;border:none;border-radius:12px;cursor:pointer;
       background:var(--yellow);color:#000
     }
-    .hint{font-size:13px;opacity:.9;margin-top:8px}
+
+    .hint{font-size:13px;color:var(--muted);margin-top:8px}
+    .err{color:#fff;background:rgba(192,24,24,.25);padding:10px;border-radius:12px;margin-top:10px;display:none}
+    .ok{color:#fff;background:rgba(26,163,74,.25);padding:10px;border-radius:12px;margin-top:10px;display:none}
   </style>
 </head>
 <body>
@@ -42,16 +53,24 @@
 
   <div class="wrap">
     <div class="card">
-      <input id="playerName" placeholder="اسم اللاعب">
-      <input id="code" inputmode="numeric" placeholder="اكتب رمز اللعبة (6 أرقام)">
-      <button id="btn">دخول</button>
-      <div class="hint">تقدر تكتب الأرقام عربي أو إنجليزي</div>
+      <input id="name" placeholder="اسم اللاعب">
+
+      <!-- خانة الرمز (تختفي تلقائياً إذا جاء اللاعب من الباركود) -->
+      <div id="codeWrap">
+        <input id="code" inputmode="numeric" placeholder="اكتب رمز اللعبة (6 أرقام)">
+        <div class="hint" id="hintDigits">تقدر تكتب الأرقام عربي أو إنجليزي</div>
+      </div>
+
+      <button id="joinBtn" class="btn">دخول</button>
+
+      <div id="err" class="err"></div>
+      <div id="ok" class="ok"></div>
     </div>
   </div>
 
   <script type="module">
     import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.5/firebase-app.js";
-    import { getDatabase, ref, get, set, update } from "https://www.gstatic.com/firebasejs/10.12.5/firebase-database.js";
+    import { getDatabase, ref, get, set } from "https://www.gstatic.com/firebasejs/10.12.5/firebase-database.js";
 
     const firebaseConfig = {
       apiKey: "AIzaSyDy2FEg8Xj0pA05syDawTh37rI1NEbQTjQ",
@@ -66,50 +85,102 @@
     const app = initializeApp(firebaseConfig);
     const db = getDatabase(app);
 
+    const nameEl = document.getElementById("name");
+    const codeEl = document.getElementById("code");
+    const codeWrap = document.getElementById("codeWrap");
+    const joinBtn = document.getElementById("joinBtn");
+    const errEl = document.getElementById("err");
+    const okEl = document.getElementById("ok");
+
+    function showErr(msg){
+      errEl.textContent = msg;
+      errEl.style.display = "block";
+      okEl.style.display = "none";
+    }
+    function showOk(msg){
+      okEl.textContent = msg;
+      okEl.style.display = "block";
+      errEl.style.display = "none";
+    }
+
     function normalizeDigits(str){
       const map = {"٠":"0","١":"1","٢":"2","٣":"3","٤":"4","٥":"5","٦":"6","٧":"7","٨":"8","٩":"9"};
       return String(str ?? "").trim().replace(/[٠-٩]/g, d => map[d]);
     }
-    function randomId(){
+
+    function randomKey(){
       return Math.random().toString(36).slice(2) + Math.random().toString(36).slice(2);
     }
 
+    // ✅ إذا جاء من الباركود: join.html?code=123456
+    const params = new URLSearchParams(location.search);
+    const pre = params.get("code");
+    let QR_CODE = null;
+
+    if(pre){
+      const n = normalizeDigits(pre);
+      if(/^\d{6}$/.test(n)){
+        QR_CODE = n;
+        // نخفي خانة الرمز بالكامل
+        codeWrap.style.display = "none";
+        // نخزن الكود داخلياً
+        codeEl.value = n;
+      }
+    }
+
     async function joinRoom(){
-      const name = document.getElementById("playerName").value.trim();
-      const code = normalizeDigits(document.getElementById("code").value);
+      const name = nameEl.value.trim();
 
-      if(!name){ alert("اكتب اسم اللاعب"); return; }
-      if(!/^\d{6}$/.test(code)){ alert("رمز اللعبة لازم 6 أرقام"); return; }
+      // لو من QR نستخدمه، غير كذا نأخذ من الخانة
+      const code = QR_CODE ? QR_CODE : normalizeDigits(codeEl.value);
 
-      document.getElementById("btn").disabled = true;
+      if(!name){ showErr("اكتب اسم اللاعب"); return; }
 
-      const roomSnap = await get(ref(db, `rooms/${code}`));
-      if(!roomSnap.exists()){
-        document.getElementById("btn").disabled = false;
-        alert("رمز اللعبة غير صحيح");
+      // إذا مو من QR لازم يتحقق من الرمز
+      if(!QR_CODE && !/^\d{6}$/.test(code)){
+        showErr("اكتب رمز صحيح (6 أرقام)");
         return;
       }
 
-      const room = roomSnap.val();
-      const playersObj = room.players || {};
-      const list = Object.values(playersObj);
+      joinBtn.disabled = true;
+      showOk("جاري الدخول...");
 
-      const greenCount = list.filter(p => p.team === "green").length;
-      const orangeCount = list.filter(p => p.team === "orange").length;
-      const team = (greenCount <= orangeCount) ? "green" : "orange";
+      const roomRef = ref(db, `rooms/${code}`);
+      const snap = await get(roomRef);
 
-      const pid = randomId();
+      if(!snap.exists()){
+        joinBtn.disabled = false;
+        showErr("رمز اللعبة غير صحيح أو اللعبة غير موجودة.");
+        return;
+      }
 
-      await set(ref(db, `rooms/${code}/players/${pid}`), {
-        name,
-        team,
-        joinedAt: Date.now()
-      });
+      const room = snap.val();
+      const players = room.players || {};
+      const maxPlayers = Number(room.maxPlayers || 10);
+      const count = Object.keys(players).length;
 
+      if(count >= maxPlayers){
+        joinBtn.disabled = false;
+        showErr("اللعبة مكتملة (عدد اللاعبين وصل للحد).");
+        return;
+      }
+
+      // توزيع فريق بسيط (الأقل عددًا)
+      const list = Object.values(players);
+      const g = list.filter(p => p.team === "green").length;
+      const o = list.filter(p => p.team === "orange").length;
+      const team = (g <= o) ? "green" : "orange";
+
+      const pid = randomKey();
+      const player = { name, team, joinedAt: Date.now() };
+
+      await set(ref(db, `rooms/${code}/players/${pid}`), player);
+
+      // ✅ ينقله لصفحة الانتظار داخل game.html تلقائياً (طالما المقدم في lobby)
       location.href = `game.html?role=player&code=${encodeURIComponent(code)}&pid=${encodeURIComponent(pid)}`;
     }
 
-    document.getElementById("btn").addEventListener("click", joinRoom);
+    joinBtn.addEventListener("click", joinRoom);
   </script>
 </body>
 </html>
